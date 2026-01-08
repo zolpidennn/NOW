@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { MapPin, Plus, Edit, Trash2, ArrowLeft, Home, Briefcase, Building2, Star } from "lucide-react"
+import { MapPin, Plus, Edit, Trash2, ArrowLeft, Home, Briefcase, Building2, Star, Loader2 } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -12,6 +12,7 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
+import { fetchAddressByCEP, formatCEP } from "@/lib/viacep"
 
 type Address = {
   id: string
@@ -31,6 +32,7 @@ export default function AddressesPage() {
   const [loading, setLoading] = useState(true)
   const [showDialog, setShowDialog] = useState(false)
   const [editingAddress, setEditingAddress] = useState<Address | null>(null)
+  const [zipcodeField, setZipcodeField] = useState("")
   const [formData, setFormData] = useState({
     street: "",
     number: "",
@@ -41,6 +43,7 @@ export default function AddressesPage() {
     zipcode: "",
     label: "Casa",
   })
+  const [loadingCEP, setLoadingCEP] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -92,7 +95,14 @@ export default function AddressesPage() {
     if (!user) return
 
     const addressData = {
-      ...formData,
+      street: formData.street,
+      number: formData.number,
+      complement: formData.complement || null,
+      neighborhood: formData.neighborhood,
+      city: formData.city,
+      state: formData.state.toUpperCase(),
+      zip_code: formData.zipcode.replace(/\D/g, ""),
+      label: formData.label,
       user_id: user.id,
       is_default: addresses.length === 0,
     }
@@ -243,12 +253,40 @@ export default function AddressesPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2 space-y-2">
                     <Label>CEP *</Label>
-                    <Input
-                      value={formData.zipcode}
-                      onChange={(e) => setFormData({ ...formData, zipcode: e.target.value })}
-                      placeholder="00000-000"
-                      required
-                    />
+                    <div className="relative">
+                      <Input
+                        value={formData.zipcode}
+                        onChange={async (e) => {
+                          const formatted = formatCEP(e.target.value)
+                          setFormData({ ...formData, zipcode: formatted })
+                          
+                          // Buscar endereço quando CEP tiver 8 dígitos
+                          const cleanCEP = formatted.replace(/\D/g, "")
+                          if (cleanCEP.length === 8) {
+                            setLoadingCEP(true)
+                            const addressData = await fetchAddressByCEP(formatted)
+                            if (addressData) {
+                              setFormData({
+                                ...formData,
+                                zipcode: formatted,
+                                street: addressData.logradouro || "",
+                                neighborhood: addressData.bairro || "",
+                                city: addressData.localidade || "",
+                                state: addressData.uf || "",
+                                complement: addressData.complemento || "",
+                              })
+                            }
+                            setLoadingCEP(false)
+                          }
+                        }}
+                        placeholder="00000-000"
+                        maxLength={9}
+                        required
+                      />
+                      {loadingCEP && (
+                        <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                      )}
+                    </div>
                   </div>
 
                   <div className="col-span-2 space-y-2">

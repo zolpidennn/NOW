@@ -73,16 +73,48 @@ export default function LocationPage() {
       return
     }
 
+    // Salvar no perfil (backward compatibility)
     const fullAddress = `${location.street}, ${location.number} - ${location.neighborhood}, ${location.city} - ${location.state}`
+    await supabase.from("profiles").update({ address: fullAddress }).eq("id", user.id)
 
-    const { error } = await supabase.from("profiles").update({ address: fullAddress }).eq("id", user.id)
+    // Salvar na tabela de endereços
+    const { data: existingAddresses } = await supabase
+      .from("addresses")
+      .select("*")
+      .eq("user_id", user.id)
 
-    if (!error) {
-      router.push("/")
-    } else {
-      console.error("Error saving address:", error)
+    const isFirstAddress = !existingAddresses || existingAddresses.length === 0
+
+    const addressData = {
+      user_id: user.id,
+      label: "Principal",
+      street: location.street,
+      number: location.number,
+      complement: location.complement || null,
+      neighborhood: location.neighborhood,
+      city: location.city,
+      state: location.state.toUpperCase(),
+      zip_code: location.zip,
+      is_default: isFirstAddress,
     }
 
+    // Verificar se já existe um endereço igual
+    const existingAddress = existingAddresses?.find(
+      (addr) =>
+        addr.street === location.street &&
+        addr.number === location.number &&
+        addr.zip_code === location.zip
+    )
+
+    if (existingAddress) {
+      // Atualizar endereço existente
+      await supabase.from("addresses").update(addressData).eq("id", existingAddress.id)
+    } else {
+      // Criar novo endereço
+      await supabase.from("addresses").insert([addressData])
+    }
+
+    router.push("/")
     setIsSaving(false)
   }
 

@@ -88,3 +88,20 @@ export interface Review {
   comment?: string
   created_at: string
 }
+
+export interface PaymentCard {
+  id: string
+  user_id: string
+  card_number_last4: string
+  card_brand: string
+  card_holder_name: string
+  expiration_month: number
+  expiration_year: number
+  is_valid: boolean
+  validation_status: "pending" | "valid" | "invalid" | "expired"
+  validation_message?: string
+  is_default: boolean
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}

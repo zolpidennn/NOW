@@ -129,20 +129,31 @@ export function SequentialServiceRequestForm({
     try {
       const supabase = createClient()
 
-      const fullAddress = `${address}, ${addressNumber}${addressComplement ? `, ${addressComplement}` : ""}`
-
-      const requestData = {
-        user_id: profile.id,
+      // Construir endereço completo (número vai no campo notes ou em endereço separado visualmente)
+      // Na tabela service_requests, o campo address armazena o endereço completo
+      // Mas na interface, o número fica em campo separado conforme solicitado
+      const requestData: any = {
+        customer_id: profile.id,
         service_id: selectedService || null,
         category_id: selectedCategory || null,
-        description: description,
+        service_type: selectedCategoryData?.name || "residencial",
+        problem_description: description,
         product_model: productModel || null,
-        address: fullAddress,
-        phone: phone,
+        address: address, // Endereço SEM número (rua apenas)
+        city: profile?.city || "",
+        state: profile?.state || "",
+        zip_code: profile?.zip_code || "",
+        notes: addressNumber
+          ? `Número: ${addressNumber}${addressComplement ? ` | Complemento: ${addressComplement}` : ""} | ${description}`
+          : description,
         status: "pending",
-        preferred_date: preferredDate ? format(preferredDate, "yyyy-MM-dd") : null,
-        preferred_time: preferredTime || null,
-        assigned_provider_id: assignedProvider?.id || null,
+        preferred_date: preferredDate ? preferredDate.toISOString() : null,
+        scheduled_date: preferredDate ? preferredDate.toISOString() : null,
+      }
+
+      // Se tem provider atribuído
+      if (assignedProvider?.id) {
+        requestData.provider_id = assignedProvider.id
       }
 
       const { data, error } = await supabase.from("service_requests").insert([requestData]).select().single()
