@@ -18,49 +18,85 @@ export default function LocationPage() {
     neighborhood: "",
     city: "",
     state: "",
-    zip: "",
   })
-  const router = useRouter()
-  const supabase = createClient()
 
   useEffect(() => {
-    // Request geolocation permission and get coordinates
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords
+    let mounted = true
 
-          // Reverse geocoding using Nominatim (free service)
-          try {
-            const response = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
-            )
-            const data = await response.json()
+    async function fetchLocation() {
+      if (!("geolocation" in navigator)) {
+        setIsLoading(false)
+        return
+      }
 
-            setLocation({
-              street: data.address.road || "",
-              number: data.address.house_number || "",
-              complement: "",
-              neighborhood: data.address.suburb || data.address.neighbourhood || "",
-              city: data.address.city || data.address.town || "",
-              state: data.address.state || "",
-              zip: data.address.postcode || "",
-            })
-          } catch (error) {
-            console.error("Error fetching address:", error)
-          } finally {
+      try {
+        try {
+          // @ts-ignore
+          const perm = await navigator.permissions?.query?.({ name: "geolocation" })
+          if (perm?.state === "denied") {
             setIsLoading(false)
+            return
           }
-        },
-        (error) => {
-          console.error("Geolocation error:", error)
-          setIsLoading(false)
-        },
-      )
-    } else {
-      setIsLoading(false)
+        } catch {}
+
+        const getPos = () =>
+          new Promise<GeolocationPosition>((resolve, reject) =>
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 15000,
+              maximumAge: 0,
+            }),
+          )
+
+        const position = await getPos()
+        const { latitude, longitude } = position.coords
+
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1&zoom=18&accept-language=pt-BR`,
+          )
+          const data = await response.json()
+
+          const addr = data.address || {}
+          const street = addr.road || addr.street || addr.pedestrian || addr.residential || addr.footway || ""
+          let number = addr.house_number || ""
+          if (!number && data.display_name) {
+            const m = data.display_name.match(/\b(\d{1,6})\b/)
+            if (m) number = m[1]
+          }
+          const neighborhood = addr.suburb || addr.neighbourhood || addr.quarter || addr.city_district || ""
+          const city = addr.city || addr.town || addr.village || addr.municipality || addr.county || ""
+          const state = addr.state || addr.region || ""
+
+          if (!mounted) return
+
+          setLocation({
+            street,
+            number,
+            complement: addr.neighbourhood || addr.building || "",
+            neighborhood,
+            city,
+            state,
+          })
+        } catch (error) {
+          console.error("Error fetching address:", error)
+        }
+      } catch (error) {
+        console.error("Geolocation error:", error)
+      } finally {
+        if (mounted) setIsLoading(false)
+      }
+    }
+
+    fetchLocation()
+
+    return () => {
+      mounted = false
     }
   }, [])
+
+  const router = useRouter()
+  const supabase = createClient()
 
   const handleSave = async () => {
     setIsSaving(true)
@@ -94,16 +130,15 @@ export default function LocationPage() {
       neighborhood: location.neighborhood,
       city: location.city,
       state: location.state.toUpperCase(),
-      zip_code: location.zip,
       is_default: isFirstAddress,
+      is_primary: isFirstAddress,
     }
 
     // Verificar se já existe um endereço igual
     const existingAddress = existingAddresses?.find(
       (addr) =>
         addr.street === location.street &&
-        addr.number === location.number &&
-        addr.zip_code === location.zip
+        addr.number === location.number
     )
 
     if (existingAddress) {
@@ -193,11 +228,6 @@ export default function LocationPage() {
                 onChange={(e) => setLocation({ ...location, state: e.target.value })}
               />
             </div>
-          </div>
-
-          <div>
-            <Label htmlFor="zip">CEP</Label>
-            <Input id="zip" value={location.zip} onChange={(e) => setLocation({ ...location, zip: e.target.value })} />
           </div>
 
           <Button onClick={handleSave} disabled={isSaving} className="w-full" size="lg">

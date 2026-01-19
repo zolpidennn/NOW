@@ -36,8 +36,6 @@ export function SequentialServiceRequestForm({
   const [selectedCategory, setSelectedCategory] = useState(preSelectedCategory || "")
   const [selectedService, setSelectedService] = useState("")
   const [address, setAddress] = useState(profile?.address || "")
-  const [addressNumber, setAddressNumber] = useState("")
-  const [addressComplement, setAddressComplement] = useState("")
   const [phone, setPhone] = useState(profile?.phone || "")
   const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [description, setDescription] = useState("")
@@ -57,10 +55,6 @@ export function SequentialServiceRequestForm({
     }
     if (step === 2 && !address) {
       alert("Por favor, confirme o endereço")
-      return
-    }
-    if (step === 2 && !addressNumber) {
-      alert("O número da casa/apartamento é obrigatório")
       return
     }
     if (step === 3 && !acceptedTerms) {
@@ -139,13 +133,11 @@ export function SequentialServiceRequestForm({
         service_type: selectedCategoryData?.name || "residencial",
         problem_description: description,
         product_model: productModel || null,
-        address: address, // Endereço SEM número (rua apenas)
+        address: address, // Endereço completo
         city: profile?.city || "",
         state: profile?.state || "",
         zip_code: profile?.zip_code || "",
-        notes: addressNumber
-          ? `Número: ${addressNumber}${addressComplement ? ` | Complemento: ${addressComplement}` : ""} | ${description}`
-          : description,
+        notes: description,
         status: "pending",
         preferred_date: preferredDate ? preferredDate.toISOString() : null,
         scheduled_date: preferredDate ? preferredDate.toISOString() : null,
@@ -258,40 +250,13 @@ export function SequentialServiceRequestForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="address">Endereço (Rua, Avenida, etc.) *</Label>
+              <Label htmlFor="address">Endereço completo *</Label>
               <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} required />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="addressNumber">Número *</Label>
-                <Input
-                  id="addressNumber"
-                  value={addressNumber}
-                  onChange={(e) => setAddressNumber(e.target.value)}
-                  placeholder="123"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="addressComplement">Complemento</Label>
-                <Input
-                  id="addressComplement"
-                  value={addressComplement}
-                  onChange={(e) => setAddressComplement(e.target.value)}
-                  placeholder="Apto 45, Bloco B"
-                />
-              </div>
-            </div>
-
             <div className="bg-muted p-4 rounded-lg">
-              <p className="text-sm font-semibold mb-2">Endereço completo:</p>
-              <p className="text-sm">
-                {address}
-                {addressNumber && `, ${addressNumber}`}
-                {addressComplement && `, ${addressComplement}`}
-              </p>
+              <p className="text-sm font-semibold mb-2">Endereço confirmado:</p>
+              <p className="text-sm">{address}</p>
             </div>
           </CardContent>
         </Card>
@@ -311,8 +276,8 @@ export function SequentialServiceRequestForm({
 
               <div className="space-y-2 text-sm">
                 <p>
-                  <strong>1. Compromisso com a Qualidade:</strong> A NOW conecta você com empresas credenciadas e
-                  verificadas para garantir serviços de segurança de qualidade.
+                  <strong>1. Natureza da Plataforma:</strong> A NOW é uma plataforma digital que 
+                  conecta usuários a prestadores de serviços de segurança eletrônica cadastrados. A NOW não executa os serviços, atuando apenas como intermediadora.
                 </p>
 
                 <p>
@@ -322,18 +287,23 @@ export function SequentialServiceRequestForm({
                 </p>
 
                 <p>
-                  <strong>3. Pagamento:</strong> O pagamento será acordado diretamente com a empresa credenciada. A NOW
-                  não cobra nenhuma taxa adicional pela conexão.
+                  <strong>3. Pagamento:</strong> Os valores dos serviços são definidos pelo prestador. A NOW poderá 
+                  cobrar taxas ou comissões pela intermediação, sempre de forma clara e informada antes da contratação.
                 </p>
 
                 <p>
-                  <strong>4. Privacidade:</strong> Seus dados pessoais são protegidos e utilizados apenas para conectar
-                  você com os prestadores de serviço.
+                  <strong>4. Privacidade:</strong> Seus dados são utilizados apenas para viabilizar a conexão com os 
+                  prestadores e melhorar sua experiência, em conformidade com a LGPD.
                 </p>
 
                 <p>
                   <strong>5. Suporte:</strong> Em caso de problemas, nossa equipe está disponível para mediar e resolver
                   qualquer questão.
+                </p>
+
+                <p>
+                  <strong>6. Suporte:</strong> A NOW pode atualizar estes termos a qualquer momento. O uso contínuo da 
+                  plataforma indica concordância com as alterações.
                 </p>
               </div>
             </div>

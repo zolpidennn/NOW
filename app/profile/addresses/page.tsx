@@ -68,7 +68,21 @@ export default function AddressesPage() {
       .order("is_default", { ascending: false })
 
     if (data) {
-      setAddresses(data)
+      // Normalize DB fields to the UI shape (zip_code, is_primary vs zipcode, is_default)
+      const normalized = data.map((a: any) => ({
+        id: a.id,
+        street: a.street,
+        number: a.number,
+        complement: a.complement,
+        neighborhood: a.neighborhood,
+        city: a.city,
+        state: a.state,
+        zipcode: a.zipcode || a.zip_code || a.zip || "",
+        label: a.label,
+        is_default: Boolean(a.is_default) || Boolean(a.is_primary),
+      }))
+
+      setAddresses(normalized)
     }
 
     setLoading(false)
@@ -102,9 +116,11 @@ export default function AddressesPage() {
       city: formData.city,
       state: formData.state.toUpperCase(),
       zip_code: formData.zipcode.replace(/\D/g, ""),
+      zipcode: formData.zipcode.replace(/\D/g, ""),
       label: formData.label,
       user_id: user.id,
       is_default: addresses.length === 0,
+      is_primary: addresses.length === 0,
     }
 
     if (editingAddress) {
@@ -125,11 +141,11 @@ export default function AddressesPage() {
 
     if (!user) return
 
-    // Remove default from all addresses
-    await supabase.from("addresses").update({ is_default: false }).eq("user_id", user.id)
+    // Remove default from all addresses (support both flags)
+    await supabase.from("addresses").update({ is_default: false, is_primary: false }).eq("user_id", user.id)
 
     // Set new default
-    await supabase.from("addresses").update({ is_default: true }).eq("id", id)
+    await supabase.from("addresses").update({ is_default: true, is_primary: true }).eq("id", id)
 
     loadAddresses()
   }

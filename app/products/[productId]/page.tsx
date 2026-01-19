@@ -3,15 +3,21 @@ import { ProductDetails } from "@/components/product-details"
 import { MobileHeader } from "@/components/mobile-header"
 import { BottomNav } from "@/components/bottom-nav"
 
-export default function ProductDetailPage({ params }: { params: { productId: string } }) {
+export default function ProductDetailPage({
+  params,
+}: {
+  params: { productId: string }
+}) {
   return (
     <div className="min-h-screen bg-background">
       <MobileHeader />
-      <main className="pb-20 pt-16">
+
+      <main className="pb-20 pt-[64px]">
         <Suspense fallback={<ProductDetailsSkeleton />}>
           <ProductDetails productId={params.productId} />
         </Suspense>
       </main>
+
       <BottomNav />
     </div>
   )

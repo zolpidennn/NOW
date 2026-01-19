@@ -4,23 +4,23 @@ import { Search, Calendar, MessageSquare, CheckCircle } from "lucide-react"
 const steps = [
   {
     icon: Search,
-    title: "1. Escolha o Serviço",
-    description: "Navegue pelas categorias e encontre o serviço que você precisa",
+    title: "1. Crie sua Solicitação",
+    description: "Escolha a categoria do serviço e defina a urgência (Agora, 24h ou Agendado)",
   },
   {
     icon: Calendar,
-    title: "2. Solicite e Agende",
-    description: "Preencha os detalhes e escolha o melhor horário para você",
+    title: "2. Receba Propostas",
+    description: "Técnicos qualificados recebem seu lead e enviam propostas personalizadas",
   },
   {
     icon: MessageSquare,
-    title: "3. Acompanhe em Tempo Real",
-    description: "Comunique-se diretamente com o prestador e acompanhe o status",
+    title: "3. Escolha e Pague",
+    description: "Selecione a melhor proposta e realize o pagamento de forma segura",
   },
   {
     icon: CheckCircle,
-    title: "4. Serviço Concluído",
-    description: "Avalie o serviço e ajude outros usuários",
+    title: "4. Serviço Realizado",
+    description: "Acompanhe em tempo real e avalie o profissional após a conclusão",
   },
 ]
 

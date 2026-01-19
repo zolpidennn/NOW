@@ -7,15 +7,18 @@ export default function ProductsPage() {
   return (
     <div className="min-h-screen bg-background">
       <MobileHeader />
-      <main className="pb-20 pt-16">
+
+      <main className="pb-20 pt-[64px]">
         <Suspense fallback={<ProductCatalogSkeleton />}>
           <ProductCatalog />
         </Suspense>
       </main>
+
       <BottomNav />
     </div>
   )
 }
+
 
 function ProductCatalogSkeleton() {
   return (

@@ -111,14 +111,14 @@ export default function RootLayout({
 }
 
 export const metadata = {
-  generator: "v0.app",
+  generator: "Leonardo Lucena",
   title: {
-    default: "NOW Security Marketplace",
-    template: "%s | NOW Security",
+    default: "Solicites seu serviço - NOW",
+    template: "%s | NOW",
   },
   description: "Plataforma de serviços de segurança eletrônica - CFTV, Alarmes, Portões e mais",
   keywords: ["segurança eletrônica", "CFTV", "alarmes", "portão automático", "controle de acesso"],
-  authors: [{ name: "NOW Security" }],
+  authors: [{ name: "NOW" }],
   viewport: {
     width: "device-width",
     initialScale: 1,

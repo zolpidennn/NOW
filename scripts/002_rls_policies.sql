@@ -91,3 +91,55 @@ create policy "Customers can create reviews for completed requests"
     auth.uid() = customer_id
     and request_id in (select id from public.service_requests where status = 'completed' and customer_id = auth.uid())
   );
+
+-- Enable RLS on monetization tables
+alter table public.plans enable row level security;
+alter table public.subscriptions enable row level security;
+alter table public.transactions enable row level security;
+alter table public.highlights enable row level security;
+alter table public.maintenance_contracts enable row level security;
+
+-- RLS Policies for plans
+create policy "Anyone can view active plans"
+  on public.plans for select
+  using (is_active = true);
+
+-- RLS Policies for subscriptions
+create policy "Users can view their own subscriptions"
+  on public.subscriptions for select
+  using (auth.uid() = user_id);
+
+create policy "Users can manage their own subscriptions"
+  on public.subscriptions for all
+  using (auth.uid() = user_id);
+
+-- RLS Policies for transactions
+create policy "Providers can view transactions for their services"
+  on public.transactions for select
+  using (provider_id in (select id from public.service_providers where user_id = auth.uid()));
+
+create policy "Clients can view their own transactions"
+  on public.transactions for select
+  using (auth.uid() = client_id);
+
+-- RLS Policies for highlights
+create policy "Providers can view their own highlights"
+  on public.highlights for select
+  using (provider_id in (select id from public.service_providers where user_id = auth.uid()));
+
+create policy "Providers can manage their own highlights"
+  on public.highlights for all
+  using (provider_id in (select id from public.service_providers where user_id = auth.uid()));
+
+-- RLS Policies for maintenance_contracts
+create policy "Clients can view their own maintenance contracts"
+  on public.maintenance_contracts for select
+  using (auth.uid() = client_id);
+
+create policy "Providers can view maintenance contracts assigned to them"
+  on public.maintenance_contracts for select
+  using (provider_id in (select id from public.service_providers where user_id = auth.uid()));
+
+create policy "Clients can manage their own maintenance contracts"
+  on public.maintenance_contracts for all
+  using (auth.uid() = client_id);
