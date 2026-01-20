@@ -18,6 +18,7 @@ export default function LocationPage() {
     neighborhood: "",
     city: "",
     state: "",
+    zip_code: "",
   })
 
   useEffect(() => {
@@ -53,7 +54,7 @@ export default function LocationPage() {
 
         try {
           const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1&zoom=18&accept-language=pt-BR`,
+            `/api/geocode/reverse?lat=${latitude}&lon=${longitude}`,
           )
           const data = await response.json()
 
@@ -67,6 +68,7 @@ export default function LocationPage() {
           const neighborhood = addr.suburb || addr.neighbourhood || addr.quarter || addr.city_district || ""
           const city = addr.city || addr.town || addr.village || addr.municipality || addr.county || ""
           const state = addr.state || addr.region || ""
+          const zip_code = addr.postcode || ""
 
           if (!mounted) return
 
@@ -77,6 +79,7 @@ export default function LocationPage() {
             neighborhood,
             city,
             state,
+            zip_code,
           })
         } catch (error) {
           console.error("Error fetching address:", error)
@@ -111,7 +114,12 @@ export default function LocationPage() {
 
     // Salvar no perfil (backward compatibility)
     const fullAddress = `${location.street}, ${location.number} - ${location.neighborhood}, ${location.city} - ${location.state}`
-    await supabase.from("profiles").update({ address: fullAddress }).eq("id", user.id)
+    await supabase.from("profiles").update({ 
+      address: fullAddress,
+      city: location.city,
+      state: location.state,
+      zip_code: location.zip_code
+    }).eq("id", user.id)
 
     // Salvar na tabela de endereços
     const { data: existingAddresses } = await supabase
@@ -130,6 +138,7 @@ export default function LocationPage() {
       neighborhood: location.neighborhood,
       city: location.city,
       state: location.state.toUpperCase(),
+      zip_code: location.zip_code || null,
       is_default: isFirstAddress,
       is_primary: isFirstAddress,
     }
@@ -228,6 +237,15 @@ export default function LocationPage() {
                 onChange={(e) => setLocation({ ...location, state: e.target.value })}
               />
             </div>
+          </div>
+
+          <div>
+            <Label htmlFor="zip_code">CEP</Label>
+            <Input
+              id="zip_code"
+              value={location.zip_code}
+              onChange={(e) => setLocation({ ...location, zip_code: e.target.value })}
+            />
           </div>
 
           <Button onClick={handleSave} disabled={isSaving} className="w-full" size="lg">

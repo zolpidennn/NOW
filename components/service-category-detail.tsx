@@ -74,7 +74,7 @@ export function ServiceCategoryDetail({ category }: { category: Category }) {
 
       {benefits.length > 0 && (
         <div className="mb-6">
-          <h2 className="mb-4 text-xl font-bold text-black">Diferenciais NOW</h2>
+          <h2 className="mb-4 text-xl font-bold text-black">O que a NOW oferece?</h2>
           <div className="grid grid-cols-2 gap-3">
             {benefits.map((benefit: string, index: number) => (
               <div
@@ -102,37 +102,37 @@ export function ServiceCategoryDetail({ category }: { category: Category }) {
           <li className="flex items-start gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-black mt-2" />
             <span>
-              <strong>Transparência total:</strong> Empresas verificadas e avaliadas por clientes reais
+              <strong>Transparência total:</strong> Prestadores verificados, com avaliações reais de clientes.
             </span>
           </li>
           <li className="flex items-start gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-black mt-2" />
             <span>
-              <strong>Atendimento completo:</strong> Suporte antes, durante e após o serviço
+              <strong>Atendimento completo:</strong> Suporte da NOW antes, durante e após o serviço.
             </span>
           </li>
           <li className="flex items-start gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-black mt-2" />
             <span>
-              <strong>Técnicos certificados:</strong> Profissionais com experiência comprovada
+              <strong>Técnicos qualificados:</strong> Profissionais certificados e com experiência comprovada.
             </span>
           </li>
           <li className="flex items-start gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-black mt-2" />
             <span>
-              <strong>Garantia em serviços:</strong> Proteção e garantia em todos os atendimentos
+              <strong>Garantia nos serviços:</strong> Mais segurança e proteção em todos os atendimentos realizados pela plataforma.
             </span>
           </li>
           <li className="flex items-start gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-black mt-2" />
             <span>
-              <strong>Acompanhamento em tempo real:</strong> Veja o status via app
+              <strong>Acompanhe em tempo real:</strong> Acompanhe o status do serviço diretamente pelo app.
             </span>
           </li>
           <li className="flex items-start gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-black mt-2" />
             <span>
-              <strong>Suporte disponível:</strong> Nossa equipe está pronta para ajudar
+              <strong>Suporte disponível:</strong> Nossa equipe está sempre pronta para ajudar quando você precisar.
             </span>
           </li>
         </ul>

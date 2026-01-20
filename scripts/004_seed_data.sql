@@ -5,7 +5,9 @@ insert into public.service_categories (name, description, icon_name, display_ord
   ('CFTV', 'Instalação e configuração de câmeras de segurança e sistemas de monitoramento', 'Camera', 3),
   ('Controle de Acesso', 'Sistemas de controle de acesso biométrico, por cartão e senha', 'Shield', 4),
   ('Interfones e Videoporteiros', 'Instalação e manutenção de interfones e videoporteiros', 'Phone', 5),
-  ('Cerca Elétrica', 'Instalação e manutenção de cercas elétricas de segurança', 'Zap', 6)
+  ('Cerca Elétrica', 'Instalação e manutenção de cercas elétricas de segurança', 'Zap', 6),
+  ('Residencial', 'Soluções completas de segurança para residências', 'Home', 7),
+  ('Empresarial', 'Soluções corporativas de segurança para empresas', 'Building2', 8)
 on conflict (name) do nothing;
 
 -- Inserir planos de monetização

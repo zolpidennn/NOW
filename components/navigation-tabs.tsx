@@ -26,14 +26,14 @@ const tabs = [
 ]
 
 const services = [
-  { icon: Camera, label: "CFTV", description: "Sistemas de câmeras e monitoramento" },
-  { icon: BellIcon, label: "Alarmes", description: "Alarmes residenciais e comerciais" },
-  { icon: Zap, label: "Automatização", description: "Automação residencial e predial" },
-  { icon: Lock, label: "Controle de Acesso", description: "Fechaduras e controles inteligentes" },
-  { icon: Wifi, label: "Cerca Elétrica", description: "Instalação e manutenção" },
-  { icon: Shield, label: "Interfone", description: "Interfones e videoporteiros" },
-  { icon: Home, label: "Residencial", description: "Soluções para sua casa" },
-  { icon: Building2, label: "Empresarial", description: "Soluções corporativas" },
+  { icon: Camera, label: "CFTV", slug: "cftv", description: "Sistemas de câmeras e monitoramento" },
+  { icon: BellIcon, label: "Alarmes", slug: "alarmes", description: "Alarmes residenciais e comerciais" },
+  { icon: Zap, label: "Automatização", slug: "automatizacao", description: "Automação residencial e predial" },
+  { icon: Lock, label: "Controle de Acesso", slug: "controle-de-acesso", description: "Fechaduras e controles inteligentes" },
+  { icon: Wifi, label: "Cerca Elétrica", slug: "cerca-eletrica", description: "Instalação e manutenção" },
+  { icon: Shield, label: "Interfone", slug: "interfone", description: "Interfones e videoporteiros" },
+  { icon: Home, label: "Residencial", slug: "residencial", description: "Soluções para sua casa" },
+  { icon: Building2, label: "Empresarial", slug: "empresarial", description: "Soluções corporativas" },
 ]
 
 export function NavigationTabs() {
@@ -97,7 +97,10 @@ export function NavigationTabs() {
         </div>
       </nav>
 
-      <Sheet open={showServicesSheet} onOpenChange={setShowServicesSheet}>
+      <Sheet open={showServicesSheet} onOpenChange={(open) => {
+        setShowServicesSheet(open)
+        if (!open) setActiveTab("inicio")
+      }}>
         <SheetContent side="bottom" className="h-[85vh] overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="text-2xl">Nossos Serviços</SheetTitle>
@@ -140,7 +143,10 @@ export function NavigationTabs() {
                 return (
                   <button
                     key={service.label}
-                    onClick={() => setShowServicesSheet(false)}
+                    onClick={() => {
+                      setShowServicesSheet(false)
+                      router.push(`/categories/${service.slug}`)
+                    }}
                     className="flex items-start gap-3 p-4 rounded-lg bg-card border border-border hover:border-primary/50 transition-all active:scale-95"
                   >
                     <div className="flex-shrink-0 mt-0.5">
@@ -158,7 +164,10 @@ export function NavigationTabs() {
         </SheetContent>
       </Sheet>
 
-      <Sheet open={showCompaniesSheet} onOpenChange={setShowCompaniesSheet}>
+      <Sheet open={showCompaniesSheet} onOpenChange={(open) => {
+        setShowCompaniesSheet(open)
+        if (!open) setActiveTab("inicio")
+      }}>
         <SheetContent side="bottom" className="h-[85vh] overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="text-2xl">Empresas Verificadas</SheetTitle>
@@ -197,7 +206,10 @@ export function NavigationTabs() {
         </SheetContent>
       </Sheet>
 
-      <Sheet open={showPromotionsSheet} onOpenChange={setShowPromotionsSheet}>
+      <Sheet open={showPromotionsSheet} onOpenChange={(open) => {
+        setShowPromotionsSheet(open)
+        if (!open) setActiveTab("inicio")
+      }}>
         <SheetContent side="bottom" className="h-[85vh] overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="text-2xl flex items-center gap-2">

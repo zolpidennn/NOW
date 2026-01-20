@@ -5,7 +5,7 @@ import Link from "next/link"
 
 const services = [
   { icon: Camera, label: "CFTV", href: "categories/cftv" },
-  { icon: BellIcon, label: "Alarmes", href: "categories/larmes" },
+  { icon: BellIcon, label: "Alarmes", href: "categories/alarmes" },
   { icon: Zap, label: "Automatização", href: "/categories/automacao" },
   { icon: Lock, label: "Controle de Acesso", href: "/categories/acesso" },
   { icon: Wifi, label: "Cerca Elétrica", href: "/categories/cerca" },

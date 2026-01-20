@@ -21,7 +21,7 @@ export default function SearchPage() {
           <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Buscar em Todos os Serviços NOW"
+            placeholder="Que tipo de serviço você procura?"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="h-12 rounded-lg border bg-card pl-10 text-base shadow-sm text-foreground placeholder:text-muted-foreground"

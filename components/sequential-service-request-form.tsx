@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -8,14 +8,67 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
-import { Loader2, CheckCircle2, ArrowLeft, ArrowRight } from "lucide-react"
+import { Loader2, CheckCircle2, ArrowLeft, ArrowRight, MapPin, Star } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { format } from "date-fns"
-import { ptBR } from "date-fns/locale"
-import { cn } from "@/lib/utils"
+import dynamic from "next/dynamic"
+
+// Dynamic import for Leaflet to avoid SSR issues
+const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false })
+const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false })
+const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false })
+const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false })
+
+// Import Leaflet CSS
+import 'leaflet/dist/leaflet.css'
+import L from 'leaflet'
+
+// Fix for default markers in Leaflet
+delete (L.Icon.Default.prototype as any)._getIconUrl
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+})
+
+// Custom marker components for Leaflet
+const createUserIcon = (profileImage?: string) => {
+  return L.divIcon({
+    html: `
+      <div class="relative">
+        <div class="w-12 h-12 rounded-full border-4 border-blue-500 shadow-lg overflow-hidden bg-white">
+          ${profileImage ? 
+            `<img src="${profileImage}" alt="Sua foto" class="w-full h-full object-cover" />` :
+            `<div class="w-full h-full bg-blue-500 flex items-center justify-center text-white font-bold text-lg">👤</div>`
+          }
+        </div>
+        <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-blue-500 rotate-45 border-2 border-white"></div>
+      </div>
+    `,
+    className: 'custom-user-marker',
+    iconSize: [48, 48],
+    iconAnchor: [24, 48],
+  })
+}
+
+const createProviderIcon = (provider: any) => {
+  return L.divIcon({
+    html: `
+      <div class="relative">
+        <div class="w-14 h-14 rounded-full border-4 border-white shadow-xl overflow-hidden bg-white">
+          ${provider.profile_image ? 
+            `<img src="${provider.profile_image}" alt="${provider.company_name}" class="w-full h-full object-cover" />` :
+            `<div class="w-full h-full bg-primary flex items-center justify-center text-white font-bold text-xl">${provider.company_name.charAt(0)}</div>`
+          }
+        </div>
+        <div class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-5 h-5 bg-white border-2 border-gray-300 rotate-45"></div>
+      </div>
+    `,
+    className: 'custom-provider-marker',
+    iconSize: [56, 56],
+    iconAnchor: [28, 56],
+  })
+}
 
 interface SequentialServiceRequestFormProps {
   profile: any
@@ -41,16 +94,66 @@ export function SequentialServiceRequestForm({
   const [description, setDescription] = useState("")
   const [productModel, setProductModel] = useState("")
 
-  const [preferredDate, setPreferredDate] = useState<Date | undefined>(undefined)
-  const [preferredTime, setPreferredTime] = useState("")
   const [assignedProvider, setAssignedProvider] = useState<any>(null)
   const [providerLoading, setProviderLoading] = useState(false)
 
-  const totalSteps = 7 // Updated from 6 to 7
+  // New states for step 6
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [nearbyProviders, setNearbyProviders] = useState<any[]>([])
+  const [selectedProvider, setSelectedProvider] = useState<any>(null)
+  const [locationLoading, setLocationLoading] = useState(false)
+  const [userIcon, setUserIcon] = useState<L.DivIcon | null>(null)
+  const [providerIcons, setProviderIcons] = useState<Map<string, L.DivIcon>>(new Map())
+
+  const totalSteps = 6 // Updated from 7 to 6
+
+  useEffect(() => {
+    if (step === 6 && !userLocation) {
+      setLocationLoading(true)
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords
+          setUserLocation({ lat: latitude, lng: longitude })
+          findNearbyProviders(latitude, longitude)
+          setLocationLoading(false)
+        },
+        (error) => {
+          console.error("Error getting location:", error)
+          // Fallback to a default location (e.g., São Paulo)
+          const defaultLat = -23.5505
+          const defaultLng = -46.6333
+          setUserLocation({ lat: defaultLat, lng: defaultLng })
+          findNearbyProviders(defaultLat, defaultLng)
+          setLocationLoading(false)
+        }
+      )
+    }
+  }, [step])
+
+  // Create custom icons when data is available
+  useEffect(() => {
+    if (typeof window !== 'undefined' && profile) {
+      setUserIcon(createUserIcon(profile.avatar_url || profile.profile_image))
+    }
+  }, [profile])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && nearbyProviders.length > 0) {
+      const icons = new Map<string, L.DivIcon>()
+      nearbyProviders.forEach(provider => {
+        icons.set(provider.id, createProviderIcon(provider))
+      })
+      setProviderIcons(icons)
+    }
+  }, [nearbyProviders])
 
   const handleNext = () => {
     if (step === 1 && !selectedCategory) {
       alert("Por favor, selecione uma categoria de serviço")
+      return
+    }
+    if (step === 1 && filteredServices.length > 0 && !selectedService) {
+      alert("Por favor, selecione um serviço específico")
       return
     }
     if (step === 2 && !address) {
@@ -69,18 +172,6 @@ export function SequentialServiceRequestForm({
       alert("Por favor, descreva o problema")
       return
     }
-    if (step === 6 && !preferredDate) {
-      alert("Por favor, escolha uma data preferencial")
-      return
-    }
-    if (step === 6 && !preferredTime) {
-      alert("Por favor, escolha um horário preferencial")
-      return
-    }
-
-    if (step === 5) {
-      findAvailableProvider()
-    }
 
     setStep(step + 1)
   }
@@ -93,25 +184,29 @@ export function SequentialServiceRequestForm({
     }
   }
 
-  const findAvailableProvider = async () => {
+  const findNearbyProviders = async (lat: number, lng: number) => {
     setProviderLoading(true)
     try {
       const supabase = createClient()
 
-      // Find providers for this category with availability
+      // Find providers near the user's location (simplified, assuming lat/lng fields exist)
       const { data: providers } = await supabase
         .from("service_providers")
         .select("*")
         .eq("is_active", true)
         .eq("verification_status", "verified")
-        .limit(1)
-        .single()
+        .limit(10) // Get more providers for the map
 
-      if (providers) {
-        setAssignedProvider(providers)
-      }
+      // For demo, simulate nearby providers with random positions around user location
+      const nearby = providers?.map(provider => ({
+        ...provider,
+        lat: lat + (Math.random() - 0.5) * 0.01, // Random offset
+        lng: lng + (Math.random() - 0.5) * 0.01,
+      })) || []
+
+      setNearbyProviders(nearby)
     } catch (error) {
-      console.error("[v0] Error finding provider:", error)
+      console.error("[v0] Error finding nearby providers:", error)
     } finally {
       setProviderLoading(false)
     }
@@ -128,31 +223,29 @@ export function SequentialServiceRequestForm({
       // Mas na interface, o número fica em campo separado conforme solicitado
       const requestData: any = {
         customer_id: profile.id,
-        service_id: selectedService || null,
-        category_id: selectedCategory || null,
         service_type: selectedCategoryData?.name || "residencial",
-        problem_description: description,
-        product_model: productModel || null,
         address: address, // Endereço completo
         city: profile?.city || "",
         state: profile?.state || "",
         zip_code: profile?.zip_code || "",
         notes: description,
         status: "pending",
-        preferred_date: preferredDate ? preferredDate.toISOString() : null,
-        scheduled_date: preferredDate ? preferredDate.toISOString() : null,
+      }
+
+      if (selectedService) {
+        requestData.service_id = selectedService
       }
 
       // Se tem provider atribuído
-      if (assignedProvider?.id) {
-        requestData.provider_id = assignedProvider.id
+      if (selectedProvider?.id) {
+        requestData.provider_id = selectedProvider.id
       }
 
       const { data, error } = await supabase.from("service_requests").insert([requestData]).select().single()
 
       if (error) throw error
 
-      router.push(`/dashboard/requests/${data.id}`)
+      router.push(`/orders`)
     } catch (error) {
       console.error("[v0] Error submitting request:", error)
       alert("Erro ao enviar solicitação. Por favor, tente novamente.")
@@ -167,13 +260,30 @@ export function SequentialServiceRequestForm({
 
   const selectedCategoryData = categories.find((c) => c.id === selectedCategory)
 
-  const timeSlots = ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"]
-
   return (
-    <div className="space-y-6">
+    <>
+      <style jsx global>{`
+        .leaflet-popup-content-wrapper {
+          border-radius: 12px;
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+          border: none;
+          padding: 0;
+        }
+        .leaflet-popup-tip {
+          border-width: 8px;
+        }
+        .leaflet-popup-content {
+          margin: 0;
+        }
+        .custom-user-marker, .custom-provider-marker {
+          background: transparent !important;
+          border: none !important;
+        }
+      `}</style>
+      <div className="space-y-6">
       {/* Progress indicator */}
       <div className="flex items-center justify-between mb-8 overflow-x-auto">
-        {[1, 2, 3, 4, 5, 6, 7].map((s) => (
+        {[1, 2, 3, 4, 5, 6].map((s) => (
           <div key={s} className="flex items-center flex-shrink-0">
             <div
               className={`flex h-10 w-10 items-center justify-center rounded-full border-2 text-xs ${
@@ -381,156 +491,157 @@ export function SequentialServiceRequestForm({
         </Card>
       )}
 
+      {/* Step 6: Select Provider on Map */}
       {step === 6 && (
         <Card>
           <CardContent className="pt-6 space-y-4">
-            {providerLoading ? (
+            {locationLoading ? (
               <div className="text-center space-y-4 py-8">
-                <Loader2 className="h-16 w-16 mx-auto animate-spin text-primary" />
-                <h2 className="text-2xl font-bold">Buscando empresa credenciada...</h2>
-                <p className="text-muted-foreground">Aguarde enquanto encontramos o melhor prestador para você</p>
+                <MapPin className="h-16 w-16 mx-auto animate-pulse text-primary" />
+                <h2 className="text-2xl font-bold">Localizando você...</h2>
+                <p className="text-muted-foreground">Estamos encontrando empresas próximas à sua localização</p>
+                <div className="flex justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
               </div>
-            ) : assignedProvider ? (
+            ) : userLocation ? (
               <>
-                <div className="text-center space-y-2 mb-4">
-                  <CheckCircle2 className="h-12 w-12 mx-auto text-green-600" />
-                  <h2 className="text-2xl font-bold">Empresa Selecionada!</h2>
-                  <p className="text-lg font-semibold">{assignedProvider.company_name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    Avaliação: ⭐ {assignedProvider.rating?.toFixed(1) || "5.0"} ({assignedProvider.total_reviews || 0}{" "}
-                    avaliações)
-                  </p>
-                </div>
-
                 <div className="text-center space-y-2">
-                  <h3 className="text-xl font-bold">Escolha data e horário</h3>
-                  <p className="text-muted-foreground">Selecione sua preferência de atendimento</p>
+                  <h2 className="text-2xl font-bold">Escolha uma empresa credenciada</h2>
+                  <p className="text-muted-foreground">Selecione no mapa a empresa que deseja contratar</p>
                 </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <Label>Data Preferencial *</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !preferredDate && "text-muted-foreground",
-                          )}
-                        >
-                          {preferredDate ? format(preferredDate, "PPP", { locale: ptBR }) : "Escolha uma data"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar
-                          mode="single"
-                          selected={preferredDate}
-                          onSelect={setPreferredDate}
-                          disabled={(date) => date < new Date()}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
+                <div className="h-96 w-full rounded-lg overflow-hidden border">
+                  <MapContainer
+                    center={[userLocation.lat, userLocation.lng]}
+                    zoom={13}
+                    style={{ height: '100%', width: '100%' }}
+                    className="rounded-lg"
+                  >
+                    <TileLayer
+                      url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                    />
+                    {/* User location marker */}
+                    {userIcon && (
+                      <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon}>
+                        <Popup>
+                          <div className="text-center p-2">
+                            <MapPin className="h-6 w-6 mx-auto text-blue-500" />
+                            <p className="font-semibold">Sua localização</p>
+                          </div>
+                        </Popup>
+                      </Marker>
+                    )}
+                    {/* Provider markers */}
+                    {nearbyProviders.map((provider) => {
+                      const icon = providerIcons.get(provider.id)
+                      return icon ? (
+                        <Marker key={provider.id} position={[provider.lat, provider.lng]} icon={icon}>
+                          <Popup>
+                            <div className="space-y-3 min-w-[250px] p-2">
+                              <div className="flex items-center space-x-3">
+                                <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200">
+                                  {provider.profile_image ? (
+                                    <img
+                                      src={provider.profile_image}
+                                      alt={provider.company_name}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full bg-primary flex items-center justify-center text-white font-bold text-lg">
+                                      {provider.company_name.charAt(0)}
+                                    </div>
+                                  )}
+                                </div>
+                                <div>
+                                  <h3 className="font-semibold text-lg">{provider.company_name}</h3>
+                                  <p className="text-sm text-muted-foreground">{provider.specialty || 'Segurança Eletrônica'}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                                <span className="text-sm font-medium">{provider.rating?.toFixed(1) || '5.0'}</span>
+                                <span className="text-sm text-muted-foreground">({provider.total_reviews || 0} avaliações)</span>
+                              </div>
+                              <Button
+                                size="sm"
+                                onClick={() => setSelectedProvider(provider)}
+                                className="w-full"
+                              >
+                                Selecionar Empresa
+                              </Button>
+                            </div>
+                          </Popup>
+                        </Marker>
+                      ) : null
+                    })}
+                  </MapContainer>
+                </div>
 
-                  <div>
-                    <Label htmlFor="time">Horário Preferencial *</Label>
-                    <Select value={preferredTime} onValueChange={setPreferredTime}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Escolha um horário" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {timeSlots.map((time) => (
-                          <SelectItem key={time} value={time}>
-                            {time}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                {selectedProvider && (
+                  <div className="bg-primary/5 p-4 rounded-lg space-y-2">
+                    <h3 className="font-semibold">Empresa Selecionada:</h3>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200">
+                        {selectedProvider.profile_image ? (
+                          <img
+                            src={selectedProvider.profile_image}
+                            alt={selectedProvider.company_name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-primary flex items-center justify-center text-white font-bold text-lg">
+                            {selectedProvider.company_name.charAt(0)}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-semibold">{selectedProvider.company_name}</p>
+                        <p className="text-sm text-muted-foreground">{selectedProvider.specialty || 'Segurança Eletrônica'}</p>
+                        <p className="text-xs text-primary font-medium">Credenciada pela NOW</p>
+                        <div className="flex items-center space-x-1">
+                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                          <span className="text-sm">{selectedProvider.rating?.toFixed(1) || '5.0'}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
+                )}
 
-                  <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
-                    <p className="text-sm text-yellow-800">
-                      <strong>Atenção:</strong> Este é o seu horário de preferência. A empresa confirmará a
-                      disponibilidade e você receberá uma notificação com a confirmação final do agendamento.
-                    </p>
-                  </div>
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setSelectedProvider(null)}
+                    disabled={!selectedProvider}
+                    className="flex-1"
+                  >
+                    Escolher Outra
+                  </Button>
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={!selectedProvider || isSubmitting}
+                    className="flex-1"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Solicitando...
+                      </>
+                    ) : (
+                      "Solicitar Serviço"
+                    )}
+                  </Button>
                 </div>
               </>
             ) : (
               <div className="text-center space-y-2 py-8">
-                <h2 className="text-2xl font-bold">Empresa não encontrada</h2>
+                <h2 className="text-2xl font-bold">Erro de localização</h2>
                 <p className="text-muted-foreground">
-                  Não conseguimos encontrar uma empresa credenciada no momento. Por favor, tente novamente.
+                  Não conseguimos acessar sua localização. Verifique as permissões do navegador.
                 </p>
               </div>
             )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 7: Review & Confirmation */}
-      {step === 7 && (
-        <Card>
-          <CardContent className="pt-6 space-y-4">
-            <div className="text-center space-y-4 py-8">
-              {!isSubmitting ? (
-                <>
-                  <CheckCircle2 className="h-16 w-16 mx-auto text-primary" />
-                  <h2 className="text-2xl font-bold">Tudo pronto!</h2>
-                  <p className="text-muted-foreground">Revise suas informações e confirme a solicitação</p>
-
-                  <div className="space-y-3 text-left bg-muted p-6 rounded-lg">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Serviço:</p>
-                      <p className="font-semibold">{selectedCategoryData?.name}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Endereço:</p>
-                      <p className="font-semibold">
-                        {address}, {addressNumber}
-                        {addressComplement && `, ${addressComplement}`}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Telefone:</p>
-                      <p className="font-semibold">{phone}</p>
-                    </div>
-                    {assignedProvider && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Empresa Selecionada:</p>
-                        <p className="font-semibold">{assignedProvider.company_name}</p>
-                      </div>
-                    )}
-                    {preferredDate && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Data/Horário Preferencial:</p>
-                        <p className="font-semibold">
-                          {format(preferredDate, "dd/MM/yyyy", { locale: ptBR })} às {preferredTime}
-                        </p>
-                      </div>
-                    )}
-                    <div>
-                      <p className="text-sm text-muted-foreground">Descrição:</p>
-                      <p className="font-semibold">{description}</p>
-                    </div>
-                    {productModel && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Produto/Modelo:</p>
-                        <p className="font-semibold">{productModel}</p>
-                      </div>
-                    )}
-                  </div>
-                </>
-              ) : (
-                <>
-                  <Loader2 className="h-16 w-16 mx-auto animate-spin text-primary" />
-                  <h2 className="text-2xl font-bold">Processando sua solicitação...</h2>
-                  <p className="text-muted-foreground">Aguarde enquanto finalizamos seu agendamento</p>
-                </>
-              )}
-            </div>
           </CardContent>
         </Card>
       )}
@@ -548,7 +659,7 @@ export function SequentialServiceRequestForm({
           {step === 1 ? "Cancelar" : "Voltar"}
         </Button>
 
-        {step < 7 ? (
+        {step < 6 ? (
           <Button type="button" onClick={handleNext} className="flex-1">
             Próximo
             <ArrowRight className="h-4 w-4 ml-2" />
@@ -567,5 +678,6 @@ export function SequentialServiceRequestForm({
         )}
       </div>
     </div>
+    </>
   )
 }

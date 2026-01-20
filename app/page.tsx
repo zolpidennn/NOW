@@ -5,7 +5,6 @@ import { NavigationTabs } from "@/components/navigation-tabs"
 import { ServiceGrid } from "@/components/service-grid"
 import { PromoBanner } from "@/components/promo-banner"
 import { ProductsCatalog } from "@/components/products-catalog"
-import { RecentProviders } from "@/components/recent-providers"
 import { BottomNav } from "@/components/bottom-nav"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
@@ -56,7 +55,6 @@ export default function HomePage() {
             <ServiceGrid />
             <PromoBanner />
             <ProductsCatalog />
-            <RecentProviders />
           </div>
         </main>
         <Footer />
@@ -98,7 +96,6 @@ export default function HomePage() {
           <ServiceGrid />
           <PromoBanner />
           <ProductsCatalog />
-          <RecentProviders />
         </main>
         <BottomNav />
       </div>

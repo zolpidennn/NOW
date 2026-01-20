@@ -35,7 +35,7 @@ export function RecentProviders() {
   return (
     <section className="py-6">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-bold text-white">Empresas em destaque</h2>
+        <h2 className="text-lg font-bold text-white"></h2>
         <Link href="/services" className="text-sm font-medium text-gray-600">
           Ver mais
         </Link>
