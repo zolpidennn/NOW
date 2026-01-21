@@ -10,12 +10,39 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { useEffect, useState } from "react"
 
+// Seeded random number generator to ensure server and client generate the same values
+function mulberry32(a: number) {
+  return function() {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  }
+}
+
 export default function HomePage() {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Generate particle data with fixed seeds for consistent server/client rendering
+  const desktopRand = mulberry32(12345)
+  const desktopParticles = [...Array(20)].map(() => ({
+    left: desktopRand() * 100,
+    top: desktopRand() * 100,
+    delay: desktopRand() * 5,
+    duration: 10 + desktopRand() * 10,
+  }))
+
+  const mobileRand = mulberry32(67890)
+  const mobileParticles = [...Array(15)].map(() => ({
+    left: mobileRand() * 100,
+    top: mobileRand() * 100,
+    delay: mobileRand() * 5,
+    duration: 10 + mobileRand() * 10,
+  }))
 
   return (
     <>
@@ -31,15 +58,15 @@ export default function HomePage() {
           <div className="absolute bottom-40 left-1/4 w-80 h-36 bg-primary/5 rounded-full blur-3xl animate-pulse-slow opacity-70 animation-delay-4000"></div>
           
           {/* Partículas flutuantes */}
-          {[...Array(20)].map((_, i) => (
+          {desktopParticles.map((particle, i) => (
             <div
               key={i}
               className="absolute w-2 h-2 bg-primary/20 rounded-full animate-float"
               style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 5}s`,
-                animationDuration: `${10 + Math.random() * 10}s`,
+                left: `${particle.left}%`,
+                top: `${particle.top}%`,
+                animationDelay: `${particle.delay}s`,
+                animationDuration: `${particle.duration}s`,
               }}
             />
           ))}
@@ -72,15 +99,15 @@ export default function HomePage() {
           <div className="absolute bottom-32 left-1/4 w-52 h-24 bg-primary/5 rounded-full blur-2xl animate-pulse-slow opacity-70 animation-delay-4000"></div>
           
           {/* Partículas flutuantes */}
-          {[...Array(15)].map((_, i) => (
+          {mobileParticles.map((particle, i) => (
             <div
               key={i}
               className="absolute w-1.5 h-1.5 bg-primary/20 rounded-full animate-float"
               style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 5}s`,
-                animationDuration: `${10 + Math.random() * 10}s`,
+                left: `${particle.left}%`,
+                top: `${particle.top}%`,
+                animationDelay: `${particle.delay}s`,
+                animationDuration: `${particle.duration}s`,
               }}
             />
           ))}

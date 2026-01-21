@@ -21,29 +21,56 @@ type Product = {
 }
 
 export function ProductCard({ product }: { product: Product }) {
-  const finalPrice = product.discount_price || product.price
-  const hasDiscount = product.discount_price && product.discount_price < product.price
-  const discountPercent = hasDiscount ? Math.round(((product.price - product.discount_price) / product.price) * 100) : 0
+  const hasDiscount =
+    typeof product.discount_price === "number" &&
+    product.discount_price < product.price
+
+  const finalPrice = hasDiscount ? product.discount_price! : product.price
+
+  const discountPercent = hasDiscount
+    ? Math.round(((product.price - product.discount_price!) / product.price) * 100)
+    : 0
+
+  const priceFormatter = new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  })
 
   return (
-    <Link href={`/products/${product.id}`}>
-      <Card className="group overflow-hidden hover:shadow-lg transition-all duration-300 h-full">
+    <Card
+      className={`group overflow-hidden transition-all duration-300 h-full hover:shadow-lg ${
+        product.stock === 0 ? "opacity-70" : ""
+      }`}
+    >
+      <Link
+        href={`/products/${product.id}`}
+        aria-disabled={product.stock === 0}
+        className={product.stock === 0 ? "pointer-events-none block h-full" : "block h-full"}
+      >
         <div className="relative aspect-square bg-muted">
           {product.image_url ? (
             <Image
-              src={product.image_url || "/placeholder.svg"}
+              src={product.image_url}
               alt={product.name}
               fill
-              className="object-cover group-hover:scale-105 transition-transform duration-300"
+              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
-              <span className="text-4xl font-bold text-muted-foreground/30">{product.name.charAt(0)}</span>
+              <span className="text-4xl font-bold text-muted-foreground/30">
+                {product.name.charAt(0)}
+              </span>
             </div>
           )}
 
           {hasDiscount && (
-            <Badge className="absolute top-2 left-2 bg-red-500 hover:bg-red-600">-{discountPercent}%</Badge>
+            <Badge
+              className="absolute top-2 left-2 bg-red-500 hover:bg-red-600"
+              aria-label={`Desconto de ${discountPercent}%`}
+            >
+              -{discountPercent}%
+            </Badge>
           )}
 
           {product.featured && (
@@ -53,7 +80,7 @@ export function ProductCard({ product }: { product: Product }) {
             </Badge>
           )}
 
-          {product.stock <= 5 && product.stock > 0 && (
+          {product.stock > 0 && product.stock <= 5 && (
             <Badge variant="secondary" className="absolute bottom-2 left-2 text-xs">
               Últimas {product.stock} unidades
             </Badge>
@@ -61,30 +88,43 @@ export function ProductCard({ product }: { product: Product }) {
 
           {product.stock === 0 && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-              <Badge variant="destructive">Esgotado</Badge>
+              <Badge variant="destructive" aria-live="polite">
+                Esgotado
+              </Badge>
             </div>
           )}
         </div>
 
         <CardContent className="p-3 space-y-2">
-          {product.brand && <p className="text-xs text-muted-foreground uppercase tracking-wide">{product.brand}</p>}
+          {product.brand && (
+            <p className="text-xs text-muted-foreground uppercase tracking-wide">
+              {product.brand}
+            </p>
+          )}
 
-          <h3 className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors min-h-[2.5rem]">
+          <h3 className="font-medium text-sm line-clamp-2 min-h-[2.5rem] transition-colors group-hover:text-primary">
             {product.name}
           </h3>
 
           <div className="space-y-1">
-            {hasDiscount && <p className="text-xs text-muted-foreground line-through">R$ {product.price.toFixed(2)}</p>}
-            <p className="text-lg font-bold text-primary">R$ {finalPrice.toFixed(2)}</p>
+            {hasDiscount && (
+              <p className="text-xs text-muted-foreground line-through">
+                {priceFormatter.format(product.price)}
+              </p>
+            )}
+
+            <p className="text-lg font-bold text-primary">
+              {priceFormatter.format(finalPrice)}
+            </p>
           </div>
 
-          {product.sales_count && product.sales_count > 0 && (
+          {typeof product.sales_count === "number" && product.sales_count > 0 && (
             <p className="text-xs text-muted-foreground">
               {product.sales_count} vendido{product.sales_count > 1 ? "s" : ""}
             </p>
           )}
         </CardContent>
-      </Card>
-    </Link>
+      </Link>
+    </Card>
   )
 }

@@ -143,3 +143,21 @@ create policy "Providers can view maintenance contracts assigned to them"
 create policy "Clients can manage their own maintenance contracts"
   on public.maintenance_contracts for all
   using (auth.uid() = client_id);
+
+-- RLS Policies para products
+create policy "Anyone can view active products"
+  on public.products for select
+  using (is_active = true);
+
+create policy "Admins can manage all products"
+  on public.products for all
+  using (auth.jwt() ->> 'role' = 'admin');
+
+-- RLS Policies para product_reviews
+create policy "Anyone can view product reviews"
+  on public.product_reviews for select
+  using (true);
+
+create policy "Authenticated users can create reviews"
+  on public.product_reviews for insert
+  with check (auth.uid() = user_id);

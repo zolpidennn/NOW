@@ -44,7 +44,7 @@ export default async function OrdersPage() {
         <Tabs defaultValue="services" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="services">Serviços</TabsTrigger>
-            <TabsTrigger value="products">Vendas</TabsTrigger>
+            <TabsTrigger value="products">Carrinho</TabsTrigger>
           </TabsList>
 
           <TabsContent value="services" className="space-y-4">

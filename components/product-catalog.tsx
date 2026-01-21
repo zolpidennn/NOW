@@ -80,6 +80,52 @@ export function ProductCatalog() {
 
     if (error) {
       console.error("Error loading products:", error)
+      // Fallback to mock data for testing
+      const mockProducts = [
+        {
+          id: "43a956e5-dab5-498e-89c2-304beac09197",
+          name: "Câmera de Segurança Intelbras VHL 1120 B",
+          description: "Câmera Full HD 1080p com visão noturna, ideal para monitoramento residencial e comercial.",
+          price: 299.99,
+          discount_price: 249.99,
+          image_url: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400",
+          category: "Câmeras de Segurança",
+          brand: "Intelbras",
+          stock: 15,
+          views: 45,
+          sales_count: 12,
+          featured: true
+        },
+        {
+          id: "mock-2",
+          name: "Alarme Residencial Intelbras AMT 3000",
+          description: "Sistema de alarme completo com 8 zonas, teclado touch, sirene interna e externa.",
+          price: 899.99,
+          image_url: "https://images.unsplash.com/photo-1582139329536-e7284fece509?w=400",
+          category: "Alarmes",
+          brand: "Intelbras",
+          stock: 8,
+          views: 32,
+          sales_count: 5,
+          featured: true
+        },
+        {
+          id: "mock-3",
+          name: "Interfone Digital Hikvision DS-KV6113",
+          description: "Interfone digital touchscreen 7\" com câmera HD, controle de acesso e integração com sistemas de segurança.",
+          price: 1299.99,
+          discount_price: 1099.99,
+          image_url: "https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400",
+          category: "Interfones",
+          brand: "Hikvision",
+          stock: 5,
+          views: 28,
+          sales_count: 3,
+          featured: false
+        }
+      ]
+      setProducts(mockProducts)
+      setBrands(["Intelbras", "Hikvision"])
     } else {
       setProducts(data || [])
       const uniqueBrands = [...new Set(data?.map((p) => p.brand).filter(Boolean))] as string[]

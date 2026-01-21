@@ -4,6 +4,7 @@ import { Check, Shield, Clock, Headphones, Award, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
+import { useState, useEffect } from "react"
 
 interface Category {
   id: string
@@ -21,6 +22,39 @@ export function ServiceCategoryDetail({ category }: { category: Category }) {
   const benefits = category.benefits || []
   const services = category.available_services || []
 
+  const rotatingMessages = [
+    {
+      reason: "Problemas inesperados podem surgir a qualquer momento",
+      stat: "70% das emergências domésticas acontecem sem aviso prévio"
+    },
+    {
+      reason: "Manutenção preventiva evita custos maiores",
+      stat: "Reparos preventivos economizam até 40% em consertos futuros"
+    },
+    {
+      reason: "Profissionais qualificados garantem segurança",
+      stat: "Serviços realizados por especialistas reduzem riscos em 80%"
+    },
+    {
+      reason: "Tempo é precioso - resolva rápido",
+      stat: "Média de 2-4 horas para resolução de problemas comuns"
+    },
+    {
+      reason: "Qualidade de vida depende de ambientes funcionais",
+      stat: "Famílias relatam 60% mais satisfação após manutenções"
+    }
+  ]
+
+  const [currentMessageIndex, setCurrentMessageIndex] = useState(0)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentMessageIndex((prev) => (prev + 1) % rotatingMessages.length)
+    }, 4000) // Rotate every 4 seconds
+
+    return () => clearInterval(interval)
+  }, [rotatingMessages.length])
+
   return (
     <div className="px-4 py-6">
       <div className="mb-6">
@@ -37,7 +71,17 @@ export function ServiceCategoryDetail({ category }: { category: Category }) {
             <Shield className="h-6 w-6 text-red-600" />
             <h2 className="font-bold text-black text-lg">Por que é importante?</h2>
           </div>
-          <p className="text-sm leading-relaxed text-gray-800">{category.importance_text}</p>
+          <p className="text-sm leading-relaxed text-gray-800 mb-4">{category.importance_text}</p>
+          <div className="border-t border-red-200 pt-4">
+            <div className="transition-opacity duration-500 ease-in-out">
+              <p className="text-sm font-semibold text-red-700 mb-1">
+                {rotatingMessages[currentMessageIndex].reason}
+              </p>
+              <p className="text-lg font-bold text-red-800">
+                {rotatingMessages[currentMessageIndex].stat}
+              </p>
+            </div>
+          </div>
         </Card>
       )}
 

@@ -17,9 +17,11 @@ interface ProviderDashboardTabsProps {
     totalAppointments: number
     unreadMessages: number
   }
+  providerId: string
+  isTeamMember?: boolean
 }
 
-export function ProviderDashboardTabs({ provider, stats }: ProviderDashboardTabsProps) {
+export function ProviderDashboardTabs({ provider, stats, providerId, isTeamMember }: ProviderDashboardTabsProps) {
   return (
     <div className="space-y-6">
       {/* Stats Overview */}
@@ -97,15 +99,15 @@ export function ProviderDashboardTabs({ provider, stats }: ProviderDashboardTabs
         </TabsList>
 
         <TabsContent value="products">
-          <ProviderProductsManager providerId={provider.id} />
+          <ProviderProductsManager providerId={providerId} />
         </TabsContent>
 
         <TabsContent value="appointments">
-          <ProviderAppointmentsManager providerId={provider.id} />
+          <ProviderAppointmentsManager providerId={providerId} />
         </TabsContent>
 
         <TabsContent value="chats">
-          <ProviderChatsManager providerId={provider.id} />
+          <ProviderChatsManager providerId={providerId} />
         </TabsContent>
       </Tabs>
     </div>

@@ -110,25 +110,49 @@ export function SequentialServiceRequestForm({
   useEffect(() => {
     if (step === 6 && !userLocation) {
       setLocationLoading(true)
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords
-          setUserLocation({ lat: latitude, lng: longitude })
-          findNearbyProviders(latitude, longitude)
-          setLocationLoading(false)
-        },
-        (error) => {
-          console.error("Error getting location:", error)
-          // Fallback to a default location (e.g., São Paulo)
-          const defaultLat = -23.5505
-          const defaultLng = -46.6333
-          setUserLocation({ lat: defaultLat, lng: defaultLng })
-          findNearbyProviders(defaultLat, defaultLng)
-          setLocationLoading(false)
+
+      // First, try to geocode the profile address
+      const geocodeAddress = async () => {
+        if (profile?.address) {
+          try {
+            const response = await fetch(`/api/geocode/forward?address=${encodeURIComponent(profile.address)}`)
+            const data = await response.json()
+
+            if (data && data.length > 0) {
+              const { lat, lon } = data[0]
+              setUserLocation({ lat: parseFloat(lat), lng: parseFloat(lon) })
+              findNearbyProviders(parseFloat(lat), parseFloat(lon))
+              setLocationLoading(false)
+              return
+            }
+          } catch (error) {
+            console.error("Error geocoding profile address:", error)
+          }
         }
-      )
+
+        // Fallback to geolocation
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords
+            setUserLocation({ lat: latitude, lng: longitude })
+            findNearbyProviders(latitude, longitude)
+            setLocationLoading(false)
+          },
+          (error) => {
+            console.error("Error getting location:", error)
+            // Fallback to a default location (e.g., São Paulo)
+            const defaultLat = -23.5505
+            const defaultLng = -46.6333
+            setUserLocation({ lat: defaultLat, lng: defaultLng })
+            findNearbyProviders(defaultLat, defaultLng)
+            setLocationLoading(false)
+          }
+        )
+      }
+
+      geocodeAddress()
     }
-  }, [step])
+  }, [step, profile?.address])
 
   // Create custom icons when data is available
   useEffect(() => {
@@ -189,26 +213,101 @@ export function SequentialServiceRequestForm({
     try {
       const supabase = createClient()
 
-      // Find providers near the user's location (simplified, assuming lat/lng fields exist)
+      // Find all active and verified providers
       const { data: providers } = await supabase
         .from("service_providers")
         .select("*")
         .eq("is_active", true)
         .eq("verification_status", "verified")
-        .limit(10) // Get more providers for the map
 
-      // For demo, simulate nearby providers with random positions around user location
-      const nearby = providers?.map(provider => ({
-        ...provider,
-        lat: lat + (Math.random() - 0.5) * 0.01, // Random offset
-        lng: lng + (Math.random() - 0.5) * 0.01,
-      })) || []
+      if (!providers || providers.length === 0) {
+        setNearbyProviders([])
+        return
+      }
 
-      setNearbyProviders(nearby)
+      // Geocode each provider's address to get real coordinates
+      const geocodedProviders = await Promise.all(
+        providers.map(async (provider) => {
+          try {
+            const fullAddress = `${provider.address}, ${provider.city}, ${provider.state}, ${provider.zip_code}, Brasil`
+            const response = await fetch(`/api/geocode/forward?address=${encodeURIComponent(fullAddress)}`)
+            const data = await response.json()
+
+            if (data && data.length > 0) {
+              const providerLat = parseFloat(data[0].lat)
+              const providerLng = parseFloat(data[0].lon)
+
+              // Calculate distance using Haversine formula
+              const distance = calculateDistance(lat, lng, providerLat, providerLng)
+
+              return {
+                ...provider,
+                lat: providerLat,
+                lng: providerLng,
+                distance: distance,
+              }
+            } else {
+              // If geocoding fails, place provider at a default distance
+              return {
+                ...provider,
+                lat: lat + (Math.random() - 0.5) * 0.02,
+                lng: lng + (Math.random() - 0.5) * 0.02,
+                distance: 999, // Mark as far away
+              }
+            }
+          } catch (error) {
+            console.error(`Error geocoding provider ${provider.id}:`, error)
+            return {
+              ...provider,
+              lat: lat + (Math.random() - 0.5) * 0.02,
+              lng: lng + (Math.random() - 0.5) * 0.02,
+              distance: 999,
+            }
+          }
+        })
+      )
+
+      // Sort by distance and take the closest 20
+      const sortedProviders = geocodedProviders
+        .filter(p => p.distance < 50) // Only show providers within 50km
+        .sort((a, b) => a.distance - b.distance)
+        .slice(0, 20)
+
+      setNearbyProviders(sortedProviders)
     } catch (error) {
       console.error("[v0] Error finding nearby providers:", error)
+      setNearbyProviders([])
     } finally {
       setProviderLoading(false)
+    }
+  }
+
+  // Calculate distance between two points using Haversine formula
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371 // Earth's radius in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180
+    const dLon = (lon2 - lon1) * Math.PI / 180
+    const a =
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon/2) * Math.sin(dLon/2)
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+    return R * c
+  }
+
+  // Find the closest provider
+  const findClosestProvider = () => {
+    if (nearbyProviders.length === 0) return
+
+    const closest = nearbyProviders.reduce((prev, current) =>
+      (prev.distance < current.distance) ? prev : current
+    )
+
+    // Center map on the closest provider
+    if (userLocation) {
+      // You could use a map ref here to pan to the provider
+      // For now, just select it
+      setSelectedProvider(closest)
     }
   }
 
@@ -509,14 +608,25 @@ export function SequentialServiceRequestForm({
                 <div className="text-center space-y-2">
                   <h2 className="text-2xl font-bold">Escolha uma empresa credenciada</h2>
                   <p className="text-muted-foreground">Selecione no mapa a empresa que deseja contratar</p>
+                  <Button
+                    onClick={findClosestProvider}
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                  >
+                    <MapPin className="h-4 w-4 mr-2" />
+                    Encontrar empresa mais próxima
+                  </Button>
                 </div>
 
-                <div className="h-96 w-full rounded-lg overflow-hidden border">
+                <div className="h-96 w-full rounded-lg overflow-hidden border relative">
                   <MapContainer
                     center={[userLocation.lat, userLocation.lng]}
                     zoom={13}
                     style={{ height: '100%', width: '100%' }}
                     className="rounded-lg"
+                    maxBounds={[[userLocation.lat - 0.1, userLocation.lng - 0.1], [userLocation.lat + 0.1, userLocation.lng + 0.1]]}
+                    maxBoundsViscosity={1.0}
                   >
                     <TileLayer
                       url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
@@ -545,18 +655,19 @@ export function SequentialServiceRequestForm({
                                   {provider.profile_image ? (
                                     <img
                                       src={provider.profile_image}
-                                      alt={provider.company_name}
+                                      alt={provider.company_name || provider.individual_name}
                                       className="w-full h-full object-cover"
                                     />
                                   ) : (
                                     <div className="w-full h-full bg-primary flex items-center justify-center text-white font-bold text-lg">
-                                      {provider.company_name.charAt(0)}
+                                      {(provider.company_name || provider.individual_name || 'P').charAt(0)}
                                     </div>
                                   )}
                                 </div>
                                 <div>
-                                  <h3 className="font-semibold text-lg">{provider.company_name}</h3>
-                                  <p className="text-sm text-muted-foreground">{provider.specialty || 'Segurança Eletrônica'}</p>
+                                  <h3 className="font-semibold text-lg">{provider.company_name || provider.individual_name}</h3>
+                                  <p className="text-sm text-muted-foreground">{provider.description || 'Serviços especializados'}</p>
+                                  <p className="text-xs text-muted-foreground">{provider.distance?.toFixed(1)} km de distância</p>
                                 </div>
                               </div>
                               <div className="flex items-center space-x-1">

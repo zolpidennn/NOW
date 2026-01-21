@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -19,8 +20,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Plus, Edit, Trash2, Building2, Phone, Mail, MapPin } from "lucide-react"
-import Link from "next/link"
+import { fetchAddressByCEP, formatCEP } from "@/lib/viacep"
+import { ArrowLeft, Plus, Building2, Mail, Phone, MapPin, Edit, Trash2, Eye } from "lucide-react"
 
 type ServiceProvider = {
   id: string
@@ -61,10 +62,19 @@ export default function CompanyManagement() {
     contact_name: "",
     email: "",
     phone: "",
-    address: "",
+    // Address fields
+    zip_code: "",
+    street: "",
+    number: "",
+    complement: "",
+    neighborhood: "",
+    city: "",
+    state: "",
+    address: "", // Full address (auto-generated)
     service_categories: [] as string[],
     description: "",
   })
+  const [loadingCEP, setLoadingCEP] = useState(false)
 
   useEffect(() => {
     checkAuth()
@@ -109,7 +119,8 @@ export default function CompanyManagement() {
 
     const supabase = createClient()
 
-    const companyData = {
+    // Prepare company data with fallback for missing columns
+    const companyData: any = {
       company_name: formData.company_name,
       contact_name: formData.contact_name || null,
       email: formData.email,
@@ -122,13 +133,25 @@ export default function CompanyManagement() {
       total_services: 0,
       provider_type: "PJ", // Default to PJ for admin-created companies
       verification_status: "verified", // Admin-created companies are pre-verified
-      city: "São Paulo", // Default values - admin can edit later
-      state: "SP",
-      zip_code: "00000-000",
+    }
+
+    // Add separated address fields if they exist in the schema
+    try {
+      // Try to add separated fields
+      companyData.zip_code = formData.zip_code.replace(/\D/g, "")
+      companyData.street = formData.street
+      companyData.number = formData.number
+      companyData.complement = formData.complement || null
+      companyData.neighborhood = formData.neighborhood
+      companyData.city = formData.city
+      companyData.state = formData.state.toUpperCase()
+    } catch (error) {
+      // Fields don't exist, use combined address
+      console.log("Separated address fields not available, using combined address")
     }
 
     if (editingCompany) {
-      const updateData = {
+      const updateData: any = {
         company_name: formData.company_name,
         contact_name: formData.contact_name || null,
         email: formData.email,
@@ -136,6 +159,19 @@ export default function CompanyManagement() {
         address: formData.address,
         service_categories: formData.service_categories,
         description: formData.description || null,
+      }
+
+      // Add separated address fields if they exist
+      try {
+        updateData.zip_code = formData.zip_code.replace(/\D/g, "")
+        updateData.street = formData.street
+        updateData.number = formData.number
+        updateData.complement = formData.complement || null
+        updateData.neighborhood = formData.neighborhood
+        updateData.city = formData.city
+        updateData.state = formData.state.toUpperCase()
+      } catch (error) {
+        console.log("Separated address fields not available for update")
       }
 
       const { error } = await supabase.from("service_providers").update(updateData).eq("id", editingCompany.id)
@@ -170,6 +206,13 @@ export default function CompanyManagement() {
       email: company.email,
       phone: company.phone,
       address: company.address,
+      zip_code: (company as any).zip_code || "",
+      street: (company as any).street || "",
+      number: (company as any).number || "",
+      complement: (company as any).complement || "",
+      neighborhood: (company as any).neighborhood || "",
+      city: (company as any).city || "",
+      state: (company as any).state || "",
       service_categories: company.service_categories || [],
       description: company.description || "",
     })
@@ -212,6 +255,13 @@ export default function CompanyManagement() {
       contact_name: "",
       email: "",
       phone: "",
+      zip_code: "",
+      street: "",
+      number: "",
+      complement: "",
+      neighborhood: "",
+      city: "",
+      state: "",
       address: "",
       service_categories: [],
       description: "",
@@ -227,6 +277,50 @@ export default function CompanyManagement() {
         : [...prev.service_categories, category],
     }))
   }
+
+  const handleCEPChange = async (cep: string) => {
+    const formattedCEP = formatCEP(cep)
+    setFormData({ ...formData, zip_code: formattedCEP })
+
+    if (formattedCEP.replace(/\D/g, "").length === 8) {
+      setLoadingCEP(true)
+      try {
+        const addressData = await fetchAddressByCEP(formattedCEP)
+        if (addressData && !addressData.erro) {
+          setFormData((prev) => ({
+            ...prev,
+            street: addressData.logradouro || "",
+            neighborhood: addressData.bairro || "",
+            city: addressData.localidade || "",
+            state: addressData.uf || "",
+          }))
+        }
+      } catch (error) {
+        console.error("Erro ao buscar CEP:", error)
+      } finally {
+        setLoadingCEP(false)
+      }
+    }
+  }
+
+  const updateFullAddress = () => {
+    const { street, number, complement, neighborhood, city, state } = formData
+    let fullAddress = ""
+
+    if (street) fullAddress += street
+    if (number) fullAddress += `, ${number}`
+    if (complement) fullAddress += ` - ${complement}`
+    if (neighborhood) fullAddress += ` - ${neighborhood}`
+    if (city) fullAddress += `, ${city}`
+    if (state) fullAddress += ` - ${state}`
+
+    setFormData((prev) => ({ ...prev, address: fullAddress }))
+  }
+
+  // Update full address whenever address components change
+  useEffect(() => {
+    updateFullAddress()
+  }, [formData.street, formData.number, formData.complement, formData.neighborhood, formData.city, formData.state])
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
@@ -300,12 +394,97 @@ export default function CompanyManagement() {
                     </div>
 
                     <div className="col-span-2 space-y-2">
-                      <Label htmlFor="address">Endereço *</Label>
+                      <Label htmlFor="zip_code">CEP *</Label>
+                      <div className="relative">
+                        <Input
+                          id="zip_code"
+                          value={formData.zip_code}
+                          onChange={(e) => handleCEPChange(e.target.value)}
+                          placeholder="00000-000"
+                          maxLength={9}
+                          required
+                        />
+                        {loadingCEP && (
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="col-span-2 space-y-2">
+                      <Label htmlFor="street">Rua *</Label>
+                      <Input
+                        id="street"
+                        value={formData.street}
+                        onChange={(e) => setFormData({ ...formData, street: e.target.value })}
+                        placeholder="Nome da rua"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="number">Número *</Label>
+                      <Input
+                        id="number"
+                        value={formData.number}
+                        onChange={(e) => setFormData({ ...formData, number: e.target.value })}
+                        placeholder="123"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="complement">Complemento</Label>
+                      <Input
+                        id="complement"
+                        value={formData.complement}
+                        onChange={(e) => setFormData({ ...formData, complement: e.target.value })}
+                        placeholder="Apto, Bloco, etc"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="neighborhood">Bairro *</Label>
+                      <Input
+                        id="neighborhood"
+                        value={formData.neighborhood}
+                        onChange={(e) => setFormData({ ...formData, neighborhood: e.target.value })}
+                        placeholder="Nome do bairro"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="city">Cidade *</Label>
+                      <Input
+                        id="city"
+                        value={formData.city}
+                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                        placeholder="Nome da cidade"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="state">Estado *</Label>
+                      <Input
+                        id="state"
+                        value={formData.state}
+                        onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                        placeholder="UF"
+                        maxLength={2}
+                        required
+                      />
+                    </div>
+
+                    <div className="col-span-2 space-y-2">
+                      <Label htmlFor="address">Endereço Completo (Gerado Automaticamente)</Label>
                       <Input
                         id="address"
                         value={formData.address}
-                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                        required
+                        readOnly
+                        className="bg-muted"
                       />
                     </div>
                   </div>
@@ -418,6 +597,10 @@ export default function CompanyManagement() {
                     {company.description && <p className="text-sm text-muted-foreground">{company.description}</p>}
 
                     <div className="flex gap-2 pt-2">
+                      <Button size="sm" variant="outline" onClick={() => router.push(`/admin/dashboard/companies/${company.id}`)}>
+                        <Eye className="h-4 w-4 mr-2" />
+                        Detalhes
+                      </Button>
                       <Button size="sm" variant="outline" onClick={() => handleEdit(company)}>
                         <Edit className="h-4 w-4 mr-2" />
                         Editar

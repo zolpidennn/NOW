@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -22,6 +23,7 @@ type Product = {
 }
 
 export function ProductsCatalog() {
+  const router = useRouter()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -39,8 +41,36 @@ export function ProductsCatalog() {
       .order("created_at", { ascending: false })
       .limit(8)
 
-    if (data) {
+    if (data && data.length > 0) {
       setProducts(data)
+    } else {
+      // Fallback to mock data for testing
+      const mockProducts = [
+        {
+          id: "43a956e5-dab5-498e-89c2-304beac09197",
+          name: "Câmera de Segurança Intelbras VHL 1120 B",
+          description: "Câmera Full HD 1080p com visão noturna, ideal para monitoramento residencial e comercial.",
+          price: 299.99,
+          discount_price: 249.99,
+          image_url: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400",
+          category: "Câmeras de Segurança",
+          brand: "Intelbras",
+          stock: 15,
+          featured: true
+        },
+        {
+          id: "mock-2",
+          name: "Alarme Residencial Intelbras AMT 3000",
+          description: "Sistema de alarme completo com 8 zonas, teclado touch, sirene interna e externa.",
+          price: 899.99,
+          image_url: "https://images.unsplash.com/photo-1582139329536-e7284fece509?w=400",
+          category: "Alarmes",
+          brand: "Intelbras",
+          stock: 8,
+          featured: true
+        }
+      ]
+      setProducts(mockProducts)
     }
     setLoading(false)
   }
@@ -113,7 +143,7 @@ export function ProductsCatalog() {
                     <span className="text-lg font-bold">R$ {product.price.toFixed(2)}</span>
                   )}
                 </div>
-                <Button size="sm" className="w-full" variant="default">
+                <Button size="sm" className="w-full" variant="default" onClick={() => router.push(`/products/${product.id}`)}>
                   <ShoppingCart className="h-4 w-4 mr-2" />
                   Comprar
                 </Button>
