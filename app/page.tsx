@@ -9,6 +9,8 @@ import { BottomNav } from "@/components/bottom-nav"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { Shield } from "lucide-react"
 
 // Seeded random number generator to ensure server and client generate the same values
 function mulberry32(a: number) {
@@ -22,10 +24,51 @@ function mulberry32(a: number) {
 
 export default function HomePage() {
   const [mounted, setMounted] = useState(false)
+  const [isChecking, setIsChecking] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
+    // Verificar se o usuário já viu o onboarding (apenas no mobile)
+    const checkOnboarding = () => {
+      try {
+        // Verificar se é mobile (largura da tela < 768px)
+        const isMobile = window.innerWidth < 768
+        const onboardingCompleted = localStorage.getItem('onboarding_completed')
+        const hasSeenOnboarding = onboardingCompleted === 'true'
+
+        if (!hasSeenOnboarding && isMobile) {
+          router.push('/onboarding')
+          return
+        }
+
+        setMounted(true)
+      } catch (error) {
+        // Em caso de erro, mostrar a página normalmente
+        setMounted(true)
+      } finally {
+        setIsChecking(false)
+      }
+    }
+
+    checkOnboarding()
+  }, [router])
+
+  // Loading screen enquanto verifica onboarding
+  if (isChecking) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="mx-auto w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center">
+            <Shield className="h-8 w-8 text-primary animate-pulse" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-foreground mb-1">NOW</h2>
+            <p className="text-muted-foreground">Carregando...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   // Generate particle data with fixed seeds for consistent server/client rendering
   const desktopRand = mulberry32(12345)
@@ -75,8 +118,8 @@ export default function HomePage() {
         <Header />
         <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-8 space-y-8 relative z-10">
           <div
-            className={`space-y-8 transition-all duration-1000 ${
-              mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+            className={`space-y-8 transition-all duration-1000 ease-out ${
+              mounted ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-8 scale-95"
             }`}
           >
             <ServiceGrid />
@@ -116,8 +159,8 @@ export default function HomePage() {
         <MobileHeader />
         <NavigationTabs />
         <main
-          className={`flex-1 px-4 space-y-6 relative z-10 transition-all duration-1000 ${
-            mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+          className={`flex-1 px-4 space-y-6 relative z-10 transition-all duration-1000 ease-out ${
+            mounted ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-8 scale-95"
           }`}
         >
           <ServiceGrid />

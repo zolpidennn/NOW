@@ -200,9 +200,6 @@ export function NavigationTabs() {
             </div>
           </div>
 
-          <div className="flex items-center justify-center py-12 text-muted-foreground">
-            <p>Nossos parceiros verificados aparecerão aqui em breve</p>
-          </div>
         </SheetContent>
       </Sheet>
 
