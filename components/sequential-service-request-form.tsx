@@ -8,9 +8,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
-import { Loader2, CheckCircle2, ArrowLeft, ArrowRight, MapPin, Star } from "lucide-react"
+import { Loader2, CheckCircle2, ArrowLeft, ArrowRight, MapPin, Star, CheckCircle, AlertCircle } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import dynamic from "next/dynamic"
 
 // Dynamic import for Leaflet to avoid SSR issues
@@ -97,6 +98,13 @@ export function SequentialServiceRequestForm({
   const [assignedProvider, setAssignedProvider] = useState<any>(null)
   const [providerLoading, setProviderLoading] = useState(false)
 
+  // Phone verification states
+  const [phoneVerified, setPhoneVerified] = useState(profile?.phone_verified || false)
+  const [showPhoneVerification, setShowPhoneVerification] = useState(false)
+  const [verificationCode, setVerificationCode] = useState("")
+  const [sendingCode, setSendingCode] = useState(false)
+  const [verifyingCode, setVerifyingCode] = useState(false)
+
   // New states for step 6
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [nearbyProviders, setNearbyProviders] = useState<any[]>([])
@@ -171,6 +179,75 @@ export function SequentialServiceRequestForm({
     }
   }, [nearbyProviders])
 
+  const handleSendVerificationCode = async () => {
+    if (!phone) {
+      alert("Por favor, confirme o número de telefone primeiro")
+      return
+    }
+
+    setSendingCode(true)
+    try {
+      const response = await fetch('/api/auth/verify-phone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'send_code',
+          phone: phone
+        })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        alert("Código de verificação enviado por SMS")
+        setShowPhoneVerification(true)
+      } else {
+        alert(data.error || "Erro ao enviar código")
+      }
+    } catch (error) {
+      console.error('Error sending verification code:', error)
+      alert("Erro ao enviar código de verificação")
+    } finally {
+      setSendingCode(false)
+    }
+  }
+
+  const handleVerifyCode = async () => {
+    if (!verificationCode) {
+      alert("Por favor, digite o código de verificação")
+      return
+    }
+
+    setVerifyingCode(true)
+    try {
+      const response = await fetch('/api/auth/verify-phone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'verify_code',
+          phone: phone,
+          code: verificationCode
+        })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        alert("Telefone verificado com sucesso!")
+        setPhoneVerified(true)
+        setShowPhoneVerification(false)
+        setVerificationCode("")
+      } else {
+        alert(data.error || "Erro ao verificar código")
+      }
+    } catch (error) {
+      console.error('Error verifying code:', error)
+      alert("Erro ao verificar código")
+    } finally {
+      setVerifyingCode(false)
+    }
+  }
+
   const handleNext = () => {
     if (step === 1 && !selectedCategory) {
       alert("Por favor, selecione uma categoria de serviço")
@@ -190,6 +267,10 @@ export function SequentialServiceRequestForm({
     }
     if (step === 4 && !phone) {
       alert("Por favor, confirme o número de telefone")
+      return
+    }
+    if (step === 4 && !phoneVerified) {
+      alert("Por favor, verifique seu telefone antes de continuar")
       return
     }
     if (step === 5 && !description) {
@@ -533,7 +614,7 @@ export function SequentialServiceRequestForm({
           <CardContent className="pt-6 space-y-4">
             <div className="text-center space-y-2">
               <h2 className="text-2xl font-bold">Confirme seu telefone</h2>
-              <p className="text-muted-foreground">Como a empresa pode entrar em contato?</p>
+              <p className="text-muted-foreground">Verificação obrigatória para prosseguir</p>
             </div>
 
             <div className="space-y-2">
@@ -552,6 +633,43 @@ export function SequentialServiceRequestForm({
               <p className="text-sm font-semibold mb-2">Telefone confirmado:</p>
               <p className="text-lg font-bold">{phone || "Nenhum telefone informado"}</p>
             </div>
+
+            {phone && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  {phoneVerified ? (
+                    <div className="flex items-center gap-2 text-green-600">
+                      <CheckCircle className="h-5 w-5" />
+                      <span className="font-medium">Telefone verificado</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-amber-600">
+                      <AlertCircle className="h-5 w-5" />
+                      <span className="font-medium">Telefone não verificado</span>
+                    </div>
+                  )}
+                </div>
+
+                {!phoneVerified && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleSendVerificationCode}
+                    disabled={sendingCode}
+                    className="w-full"
+                  >
+                    {sendingCode ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Enviando código...
+                      </>
+                    ) : (
+                      "Enviar código de verificação por SMS"
+                    )}
+                  </Button>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -789,6 +907,54 @@ export function SequentialServiceRequestForm({
         )}
       </div>
     </div>
+
+    {/* Phone Verification Dialog */}
+    <Dialog open={showPhoneVerification} onOpenChange={setShowPhoneVerification}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Verificar Telefone</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Enviamos um código de 6 dígitos para o número {phone}.
+            Digite o código abaixo para verificar seu telefone.
+          </p>
+          <div className="space-y-2">
+            <Label htmlFor="verification-code">Código de Verificação</Label>
+            <Input
+              id="verification-code"
+              value={verificationCode}
+              onChange={(e) => setVerificationCode(e.target.value)}
+              placeholder="000000"
+              maxLength={6}
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleVerifyCode}
+              disabled={verifyingCode || verificationCode.length !== 6}
+              className="flex-1"
+            >
+              {verifyingCode ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Verificando...
+                </>
+              ) : (
+                "Verificar"
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowPhoneVerification(false)}
+              disabled={verifyingCode}
+            >
+              Cancelar
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
     </>
   )
 }

@@ -41,6 +41,7 @@ import {
   Eye
 } from "lucide-react"
 import { toast } from "sonner"
+import { formatCEP } from "@/lib/viacep"
 
 type Product = {
   id: string
@@ -851,11 +852,11 @@ export function ProductDetails({ productId }: { productId: string }) {
                       placeholder="Digite seu CEP"
                       value={zipCode}
                       onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, "")
-                        setZipCode(value)
+                        const formatted = formatCEP(e.target.value)
+                        setZipCode(formatted)
                         setShippingCalculated(false)
                       }}
-                      maxLength={8}
+                      maxLength={9}
                     />
                     <Button onClick={calculateShipping} disabled={zipCode.length !== 8}>
                       Calcular

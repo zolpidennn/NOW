@@ -18,6 +18,7 @@ import { CalendarIcon, Clock, MapPin } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { cn } from "@/lib/utils"
+import { formatCEP } from "@/lib/viacep"
 
 interface ServiceWithRelations extends Service {
   provider: ServiceProvider
@@ -158,7 +159,7 @@ export function ServiceRequestForm({ service, profile }: ServiceRequestFormProps
                     id="zipCode"
                     placeholder="00000-000"
                     value={zipCode}
-                    onChange={(e) => setZipCode(e.target.value)}
+                    onChange={(e) => setZipCode(formatCEP(e.target.value))}
                     required
                   />
                 </div>

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { formatCEP } from "@/lib/viacep"
 
 type Address = {
   id: string
@@ -437,7 +438,8 @@ export default function LocationPage() {
             <Input
               id="zip_code"
               value={location.zip_code}
-              onChange={(e) => setLocation({ ...location, zip_code: e.target.value })}
+              onChange={(e) => setLocation({ ...location, zip_code: formatCEP(e.target.value) })}
+              placeholder="00000-000"
             />
           </div>
 

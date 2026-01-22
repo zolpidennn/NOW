@@ -113,7 +113,7 @@ export default function RootLayout({
 export const metadata = {
   generator: "Leonardo Lucena",
   title: {
-    default: "Solicites seu serviço - NOW",
+    default: "Solicite seu serviço - NOW",
     template: "%s | NOW",
   },
   description: "Plataforma de serviços de segurança eletrônica - CFTV, Alarmes, Portões e mais",

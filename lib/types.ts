@@ -2,6 +2,8 @@ export interface Profile {
   id: string
   full_name: string
   phone?: string
+  phone_verified?: boolean
+  email?: string
   address?: string
   city?: string
   state?: string

@@ -93,7 +93,7 @@ export function ProductOrdersList({ userId }: { userId: string }) {
     return (
       <div className="text-center py-8">
         <Package className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-        <p className="text-muted-foreground">Você ainda não tem pedidos de produtos</p>
+        <p className="text-muted-foreground">Você ainda não tem produtos no seu carrinho</p>
       </div>
     )
   }

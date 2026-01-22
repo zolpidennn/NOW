@@ -115,14 +115,35 @@ export default function AddressesPage() {
       neighborhood: formData.neighborhood,
       city: formData.city,
       state: formData.state.toUpperCase(),
-      zip_code: formData.zipcode.replace(/\D/g, ""),
+      zip_code: formData.zipcode,
       label: formData.label,
       user_id: user.id,
       is_primary: addresses.length === 0,
     }
 
     if (editingAddress) {
+      // Get current profile to check if this address is the current location
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("address, city, state, zip_code")
+        .eq("id", user.id)
+        .single()
+
+      // Construct old full address string
+      const oldFullAddress = `${editingAddress.street}, ${editingAddress.number}${editingAddress.complement ? ` - ${editingAddress.complement}` : ''} - ${editingAddress.neighborhood}, ${editingAddress.city} - ${editingAddress.state}`
+
       await supabase.from("addresses").update(addressData).eq("id", editingAddress.id)
+
+      // If this address was the current location, update profile
+      if (profile && profile.address === oldFullAddress) {
+        const newFullAddress = `${formData.street}, ${formData.number}${formData.complement ? ` - ${formData.complement}` : ''} - ${formData.neighborhood}, ${formData.city} - ${formData.state.toUpperCase()}`
+        await supabase.from("profiles").update({
+          address: newFullAddress,
+          city: formData.city,
+          state: formData.state.toUpperCase(),
+          zip_code: formData.zipcode
+        }).eq("id", user.id)
+      }
     } else {
       await supabase.from("addresses").insert([addressData])
     }
@@ -144,6 +165,24 @@ export default function AddressesPage() {
 
     // Set new default
     await supabase.from("addresses").update({ is_primary: true }).eq("id", id)
+
+    // Get the new default address
+    const { data: newDefaultAddress } = await supabase
+      .from("addresses")
+      .select("*")
+      .eq("id", id)
+      .single()
+
+    if (newDefaultAddress) {
+      // Update profile with new default address
+      const fullAddress = `${newDefaultAddress.street}, ${newDefaultAddress.number}${newDefaultAddress.complement ? ` - ${newDefaultAddress.complement}` : ''} - ${newDefaultAddress.neighborhood}, ${newDefaultAddress.city} - ${newDefaultAddress.state}`
+      await supabase.from("profiles").update({
+        address: fullAddress,
+        city: newDefaultAddress.city,
+        state: newDefaultAddress.state,
+        zip_code: newDefaultAddress.zip_code
+      }).eq("id", user.id)
+    }
 
     loadAddresses()
   }

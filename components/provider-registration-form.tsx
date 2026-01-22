@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { formatCEP } from "@/lib/viacep"
 
 interface ProviderRegistrationFormProps {
   userId: string
@@ -140,7 +141,7 @@ export function ProviderRegistrationForm({ userId }: ProviderRegistrationFormPro
                 id="zipCode"
                 placeholder="00000-000"
                 value={zipCode}
-                onChange={(e) => setZipCode(e.target.value)}
+                onChange={(e) => setZipCode(formatCEP(e.target.value))}
                 required
               />
             </div>
