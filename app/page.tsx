@@ -94,12 +94,12 @@ export default function HomePage() {
         {/* Background com efeito de nuvem animado */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/5 via-background to-background"></div>
-          
+
           {/* Nuvens animadas */}
           <div className="absolute top-20 left-10 w-72 h-32 bg-white/10 rounded-full blur-3xl animate-pulse-slow opacity-60"></div>
           <div className="absolute top-40 right-20 w-96 h-40 bg-primary/10 rounded-full blur-3xl animate-pulse-slow opacity-50 animation-delay-2000"></div>
           <div className="absolute bottom-40 left-1/4 w-80 h-36 bg-primary/5 rounded-full blur-3xl animate-pulse-slow opacity-70 animation-delay-4000"></div>
-          
+
           {/* Partículas flutuantes */}
           {desktopParticles.map((particle, i) => (
             <div
@@ -135,12 +135,12 @@ export default function HomePage() {
         {/* Background com efeito de nuvem animado */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/5 via-background to-background"></div>
-          
+
           {/* Nuvens animadas */}
           <div className="absolute top-20 left-5 w-48 h-24 bg-white/10 rounded-full blur-2xl animate-pulse-slow opacity-60"></div>
           <div className="absolute top-32 right-5 w-56 h-28 bg-primary/10 rounded-full blur-2xl animate-pulse-slow opacity-50 animation-delay-2000"></div>
           <div className="absolute bottom-32 left-1/4 w-52 h-24 bg-primary/5 rounded-full blur-2xl animate-pulse-slow opacity-70 animation-delay-4000"></div>
-          
+
           {/* Partículas flutuantes */}
           {mobileParticles.map((particle, i) => (
             <div

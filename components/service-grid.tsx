@@ -4,8 +4,8 @@ import { Shield, Camera, Zap, Lock, BellIcon, Wifi, Home, Building2 } from "luci
 import Link from "next/link"
 
 const services = [
-  { icon: Camera, label: "CFTV", href: "categories/cftv" },
-  { icon: BellIcon, label: "Alarmes", href: "categories/alarmes" },
+  { icon: Camera, label: "CFTV", href: "/categories/cftv" },
+  { icon: BellIcon, label: "Alarmes", href: "/categories/alarmes" },
   { icon: Zap, label: "Automatização", href: "/categories/automacao" },
   { icon: Lock, label: "Controle de Acesso", href: "/categories/acesso" },
   { icon: Wifi, label: "Cerca Elétrica", href: "/categories/cerca" },
@@ -18,7 +18,9 @@ export function ServiceGrid() {
   return (
     <section className="py-8">
       {/* Título da seção */}
- 
+      <div className="mb-8 text-center">
+
+      </div>
 
       {/* Grid de serviços com melhor espaçamento */}
       <div className="max-w-6xl mx-auto">
@@ -29,7 +31,7 @@ export function ServiceGrid() {
               <Link
                 key={service.label}
                 href={service.href}
-                className="group flex flex-col items-center gap-3 rounded-2xl border border-border bg-card p-4 md:p-6 transition-all duration-300 hover:border-primary hover:shadow-lg hover:shadow-primary/5 active:scale-95 hover:-translate-y-1"
+                className="group relative flex flex-col items-center gap-3 rounded-2xl border border-border bg-card p-4 md:p-6 transition-all duration-300 hover:border-primary hover:shadow-lg hover:shadow-primary/5 active:scale-95 hover:-translate-y-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 z-50"
               >
                 {/* Ícone com efeito hover */}
                 <div className="relative flex h-14 w-14 md:h-16 md:w-16 items-center justify-center rounded-2xl bg-primary/10 transition-all duration-300 group-hover:bg-primary group-hover:scale-110">
@@ -55,10 +57,10 @@ export function ServiceGrid() {
             Não encontrou o que procura?
           </p>
           <Link
-            href="/services"
+            href="/search"
             className="inline-flex items-center gap-2 text-primary font-semibold hover:text-primary/80 transition-colors duration-200"
           >
-            Ver todos os serviços
+            Busque seus serviços aqui
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>

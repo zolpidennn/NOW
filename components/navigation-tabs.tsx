@@ -102,12 +102,7 @@ export function NavigationTabs() {
         if (!open) setActiveTab("inicio")
       }}>
         <SheetContent side="bottom" className="h-[85vh] overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle className="text-2xl">Nossos Serviços</SheetTitle>
-            <SheetDescription className="text-base pt-2">
-              Encontre os melhores profissionais de segurança para seu projeto
-            </SheetDescription>
-          </SheetHeader>
+
 
           <div className="bg-primary/5 rounded-lg p-4 my-4">
             <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
@@ -200,6 +195,9 @@ export function NavigationTabs() {
             </div>
           </div>
 
+          <div className="flex items-center justify-center py-12 text-muted-foreground">
+            <p>Nossos parceiros verificados aparecerão aqui em breve</p>
+          </div>
         </SheetContent>
       </Sheet>
 

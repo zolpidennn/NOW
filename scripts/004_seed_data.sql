@@ -1,14 +1,14 @@
 -- Inserir categorias de serviços de segurança eletrônica
-insert into public.service_categories (name, description, icon_name, display_order) values
-  ('Automatização de Portão', 'Instalação, manutenção e reparo de sistemas de automatização de portões residenciais, condominiais e empresariais', 'DoorOpen', 1),
-  ('Alarmes', 'Instalação e manutenção de sistemas de alarme para residências, condomínios e empresas', 'Bell', 2),
-  ('CFTV', 'Instalação e configuração de câmeras de segurança e sistemas de monitoramento', 'Camera', 3),
-  ('Controle de Acesso', 'Sistemas de controle de acesso biométrico, por cartão e senha', 'Shield', 4),
-  ('Interfones e Videoporteiros', 'Instalação e manutenção de interfones e videoporteiros', 'Phone', 5),
-  ('Cerca Elétrica', 'Instalação e manutenção de cercas elétricas de segurança', 'Zap', 6),
-  ('Residencial', 'Soluções completas de segurança para residências', 'Home', 7),
-  ('Empresarial', 'Soluções corporativas de segurança para empresas', 'Building2', 8)
-on conflict (name) do nothing;
+insert into public.service_categories (name, slug, description, icon_name, display_order) values
+  ('CFTV', 'cftv', 'Instalação e configuração de câmeras de segurança e sistemas de monitoramento', 'Camera', 1),
+  ('Alarmes', 'alarmes', 'Instalação e manutenção de sistemas de alarme para residências, condomínios e empresas', 'Bell', 2),
+  ('Automatização de Portão', 'automacao', 'Instalação, manutenção e reparo de sistemas de automatização de portões residenciais, condominiais e empresariais', 'Zap', 3),
+  ('Controle de Acesso', 'acesso', 'Sistemas de controle de acesso biométrico, por cartão e senha', 'Shield', 4),
+  ('Cerca Elétrica', 'cerca', 'Instalação e manutenção de cercas elétricas de segurança', 'Wifi', 5),
+  ('Interfones e Videoporteiros', 'interfone', 'Instalação e manutenção de interfones e videoporteiros', 'Phone', 6),
+  ('Residencial', 'residencial', 'Soluções completas de segurança para residências', 'Home', 7),
+  ('Empresarial', 'empresarial', 'Soluções corporativas de segurança para empresas', 'Building2', 8)
+on conflict (slug) do nothing;
 
 -- Inserir planos de monetização
 insert into public.plans (name, type, description, price_monthly, features, limits) values
