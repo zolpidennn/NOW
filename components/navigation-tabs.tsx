@@ -17,7 +17,10 @@ import {
   BadgeCheck,
   Store,
 } from "lucide-react"
+<<<<<<< HEAD
 import { CompanyCard } from "./company-card"
+=======
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
 
 const tabs = [
   { id: "inicio", label: "Início" },
@@ -37,14 +40,20 @@ const services = [
   { icon: Building2, label: "Empresarial", slug: "empresarial", description: "Soluções corporativas" },
 ]
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
 export function NavigationTabs() {
   const [activeTab, setActiveTab] = useState("inicio")
   const [showServicesSheet, setShowServicesSheet] = useState(false)
   const [showCompaniesSheet, setShowCompaniesSheet] = useState(false)
   const [showPromotionsSheet, setShowPromotionsSheet] = useState(false)
+<<<<<<< HEAD
   const [companiesLoading, setCompaniesLoading] = useState(false)
   const [companiesList, setCompaniesList] = useState<any[]>([])
+=======
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
   const scrollRef = useRef<HTMLDivElement>(null)
   const tabRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({})
   const router = useRouter()
@@ -70,13 +79,17 @@ export function NavigationTabs() {
       setShowServicesSheet(true)
     } else if (tabId === "empresas") {
       setShowCompaniesSheet(true)
+<<<<<<< HEAD
       loadCompanies()
+=======
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
     } else if (tabId === "promocoes") {
       router.push("/products")
     }
     setActiveTab(tabId)
   }
 
+<<<<<<< HEAD
   const loadCompanies = async () => {
     setCompaniesLoading(true)
     try {
@@ -97,6 +110,8 @@ export function NavigationTabs() {
     setCompaniesLoading(false)
   }
 
+=======
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
   return (
     <>
       <nav className="sticky top-[64px] z-40 bg-background px-4 shadow-sm dark:bg-background">
@@ -190,12 +205,17 @@ export function NavigationTabs() {
       }}>
         <SheetContent side="bottom" className="h-[85vh] overflow-y-auto">
           <SheetHeader>
+<<<<<<< HEAD
             <SheetTitle className="text-2xl">Empresas Credenciadas</SheetTitle>
+=======
+            <SheetTitle className="text-2xl">Empresas Verificadas</SheetTitle>
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
             <SheetDescription className="text-base pt-2">
               Parceiros de confiança, credenciados e selecionados pela NOW
             </SheetDescription>
           </SheetHeader>
 
+<<<<<<< HEAD
           <div className="space-y-4 mt-6 pb-6">
             {companiesLoading ? (
               <div className="flex items-center justify-center py-8">
@@ -245,6 +265,34 @@ export function NavigationTabs() {
             >
               Ver Todas as Empresas →
             </button>
+=======
+          <div className="bg-primary/5 rounded-lg p-4 my-4">
+            <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+              <BadgeCheck className="h-5 w-5 text-primary" />
+              Por que confiar em nossas empresas?
+            </h3>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p>
+                <strong className="text-foreground">✓ Empresas de confiança:</strong> Todas as empresas parceiras são
+                rigorosamente verificadas e credenciadas pela NOW.
+              </p>
+              <p>
+                <strong className="text-foreground">✓ Seleção inteligente:</strong> Nossa tecnologia avançada analisa
+                sua necessidade e conecta você com a empresa ideal.
+              </p>
+              <p>
+                <strong className="text-foreground">✓ Qualidade garantida:</strong> Trabalhamos apenas com profissionais
+                qualificados e com histórico comprovado.
+              </p>
+              <p className="text-primary font-medium pt-1">
+                A NOW garante que você será atendido pelos melhores profissionais do mercado.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-center py-12 text-muted-foreground">
+            <p>Nossos parceiros verificados aparecerão aqui em breve</p>
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
           </div>
         </SheetContent>
       </Sheet>

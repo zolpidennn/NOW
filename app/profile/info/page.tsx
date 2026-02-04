@@ -69,11 +69,14 @@ export default function ProfileInfoPage() {
   }
 
   const handleSendVerificationCode = async () => {
+<<<<<<< HEAD
     // Verificação de telefone desativada temporariamente
     alert("A verificação de telefone está desativada no momento")
     return
     
     /* Código original comentado:
+=======
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
     if (!profile.phone) {
       alert("Por favor, informe seu telefone primeiro")
       return
@@ -104,6 +107,7 @@ export default function ProfileInfoPage() {
     } finally {
       setSendingCode(false)
     }
+<<<<<<< HEAD
     */
   }
 
@@ -113,6 +117,11 @@ export default function ProfileInfoPage() {
     return
     
     /* Código original comentado:
+=======
+  }
+
+  const handleVerifyCode = async () => {
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
     if (!verificationCode) {
       alert("Por favor, digite o código de verificação")
       return
@@ -147,7 +156,10 @@ export default function ProfileInfoPage() {
     } finally {
       setVerifyingCode(false)
     }
+<<<<<<< HEAD
     */
+=======
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
   }
 
   const handleVerifyPassword = async () => {

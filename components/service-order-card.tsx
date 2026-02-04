@@ -6,11 +6,18 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
+<<<<<<< HEAD
 import { MessageCircle, Phone, Mail, MapPin, Calendar, Clock, Building2, ChevronRight, Check } from "lucide-react"
 import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import Image from "next/image"
+=======
+import { MessageCircle, Phone, Mail, MapPin, Calendar, Clock, Building2 } from "lucide-react"
+import Link from "next/link"
+import { formatDistanceToNow } from "date-fns"
+import { ptBR } from "date-fns/locale"
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
 
 interface ServiceRequest {
   id: string
@@ -26,28 +33,38 @@ interface ServiceRequest {
   created_at: string
   provider_id: string | null
   service_providers: {
+<<<<<<< HEAD
     id: string
+=======
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
     company_name: string
     cnpj?: string
     phone?: string
     email?: string
+<<<<<<< HEAD
     logo_url?: string
     rating?: number
     total_reviews?: number
+=======
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
   } | null
   service?: {
     name: string
   } | null
+<<<<<<< HEAD
   service_categories?: {
     name: string
     icon?: string
   } | null
+=======
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
 }
 
 interface ServiceOrderCardProps {
   request: ServiceRequest
 }
 
+<<<<<<< HEAD
 const progressStages = [
   { status: "pending", label: "Solicitado", percentage: 20 },
   { status: "accepted", label: "Aceito", percentage: 40 },
@@ -64,18 +81,52 @@ export function ServiceOrderCard({ request }: ServiceOrderCardProps) {
     setLoaded(true)
     const stage = progressStages.find(s => s.status === request.status)
     setProgress(stage?.percentage || 20)
+=======
+export function ServiceOrderCard({ request }: ServiceOrderCardProps) {
+  const [progress, setProgress] = useState(0)
+
+  useEffect(() => {
+    // Simulate progress animation
+    const timer = setTimeout(() => {
+      switch (request.status) {
+        case "pending":
+          setProgress(25)
+          break
+        case "confirmed":
+          setProgress(50)
+          break
+        case "in_progress":
+          setProgress(75)
+          break
+        case "completed":
+          setProgress(100)
+          break
+        default:
+          setProgress(10)
+      }
+    }, 500)
+
+    return () => clearTimeout(timer)
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
   }, [request.status])
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":
         return "bg-yellow-500"
+<<<<<<< HEAD
       case "accepted":
         return "bg-blue-500"
       case "scheduled":
         return "bg-purple-500"
       case "in_progress":
         return "bg-orange-500"
+=======
+      case "confirmed":
+        return "bg-blue-500"
+      case "in_progress":
+        return "bg-purple-500"
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
       case "completed":
         return "bg-green-500"
       case "cancelled":
@@ -87,16 +138,23 @@ export function ServiceOrderCard({ request }: ServiceOrderCardProps) {
 
   const getStatusLabel = (status: string) => {
     const labels: { [key: string]: string } = {
+<<<<<<< HEAD
       pending: "Aguardando Confirmação",
       accepted: "Aceito pela Empresa",
       scheduled: "Agendado",
       in_progress: "Em Andamento",
+=======
+      pending: "Aguardando confirmação",
+      confirmed: "Confirmado",
+      in_progress: "Em andamento",
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
       completed: "Concluído",
       cancelled: "Cancelado",
     }
     return labels[status] || status
   }
 
+<<<<<<< HEAD
   const getProgressSteps = () => {
     const currentIndex = progressStages.findIndex(s => s.status === request.status)
     return progressStages.map((stage, index) => ({
@@ -231,10 +289,66 @@ export function ServiceOrderCard({ request }: ServiceOrderCardProps) {
                     year: "numeric",
                     month: "long",
                     day: "numeric"
+=======
+  const getProgressLabel = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "Solicitação enviada"
+      case "confirmed":
+        return "Empresa confirmou"
+      case "in_progress":
+        return "Serviço em andamento"
+      case "completed":
+        return "Serviço concluído"
+      case "cancelled":
+        return "Serviço cancelado"
+      default:
+        return "Status desconhecido"
+    }
+  }
+
+  return (
+    <Card className="overflow-hidden border-0 shadow-lg bg-gradient-to-r from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
+      <CardContent className="p-0">
+        <div className="flex">
+          {/* Company Logo Section */}
+          <div className="w-20 bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center p-4">
+            <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center">
+              <Building2 className="h-6 w-6 text-primary" />
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1 p-4">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex-1">
+                <h3 className="font-semibold text-lg text-foreground mb-1">
+                  {request.service?.name || request.service_type}
+                </h3>
+                <p className="text-sm text-muted-foreground mb-2">
+                  {request.service_providers?.company_name || "Empresa não definida"}
+                </p>
+
+                {/* Status Badge */}
+                <Badge
+                  className={`${getStatusColor(request.status)} text-white text-xs px-2 py-1`}
+                >
+                  {getStatusLabel(request.status)}
+                </Badge>
+              </div>
+
+              {/* Time */}
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground">
+                  {formatDistanceToNow(new Date(request.created_at), {
+                    addSuffix: true,
+                    locale: ptBR,
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
                   })}
                 </p>
               </div>
             </div>
+<<<<<<< HEAD
           )}
 
           {/* Price */}
@@ -288,6 +402,89 @@ export function ServiceOrderCard({ request }: ServiceOrderCardProps) {
               <Mail className="h-4 w-4" />
             </Button>
           )}
+=======
+
+            {/* Progress Bar */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-foreground">
+                  {getProgressLabel(request.status)}
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  {progress}%
+                </span>
+              </div>
+              <div className="relative">
+                <Progress
+                  value={progress}
+                  className="h-2 bg-gray-200 dark:bg-gray-700"
+                />
+                <div
+                  className="absolute top-0 left-0 h-2 bg-gradient-to-r from-primary to-primary/80 rounded-full transition-all duration-1000 ease-out"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Address */}
+            <div className="flex items-start gap-2 mb-3">
+              <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-muted-foreground line-clamp-2">
+                {request.address}, {request.city} - {request.state}
+                {request.zip_code && `, CEP: ${request.zip_code}`}
+              </p>
+            </div>
+
+            {/* Scheduled Date */}
+            {request.scheduled_date && (
+              <div className="flex items-center gap-2 mb-3">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  Agendado para: {new Date(request.scheduled_date).toLocaleDateString("pt-BR")}
+                </p>
+              </div>
+            )}
+
+            {/* Price */}
+            {request.total_price && (
+              <div className="mb-3">
+                <p className="text-lg font-bold text-primary">
+                  R$ {request.total_price.toFixed(2).replace(".", ",")}
+                </p>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-2">
+              <Link href={`/dashboard/requests/${request.id}`} className="flex-1">
+                <Button size="sm" className="w-full">
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Abrir Chamado
+                </Button>
+              </Link>
+
+              {request.service_providers?.phone && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => window.open(`tel:${request.service_providers.phone}`, '_self')}
+                >
+                  <Phone className="h-4 w-4" />
+                </Button>
+              )}
+
+              {request.service_providers?.email && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => window.open(`mailto:${request.service_providers.email}`, '_self')}
+                >
+                  <Mail className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </div>
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
         </div>
       </CardContent>
     </Card>

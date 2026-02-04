@@ -4,9 +4,15 @@ import { Shield, Camera, Zap, Lock, BellIcon, Wifi, Home, Building2 } from "luci
 import Link from "next/link"
 
 const services = [
+<<<<<<< HEAD
   { icon: Camera, label: "Câmeras", href: "/categories/cftv" },
   { icon: BellIcon, label: "Alarmes", href: "/categories/alarmes" },
   { icon: Zap, label: "Automação", href: "/categories/automacao" },
+=======
+  { icon: Camera, label: "CFTV", href: "/categories/cftv" },
+  { icon: BellIcon, label: "Alarmes", href: "/categories/alarmes" },
+  { icon: Zap, label: "Automatização", href: "/categories/automacao" },
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
   { icon: Lock, label: "Controle de Acesso", href: "/categories/acesso" },
   { icon: Wifi, label: "Cerca Elétrica", href: "/categories/cerca" },
   { icon: Shield, label: "Interfone", href: "/categories/interfone" },

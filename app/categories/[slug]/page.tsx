@@ -26,7 +26,11 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   }
 
   return (
+<<<<<<< HEAD
     <div className="min-h-screen bg-white dark:bg-black pb-20">
+=======
+    <div className="min-h-screen bg-gray-50 pb-20">
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
       <MobileHeader />
       <main>
         <ServiceCategoryDetail category={category} />

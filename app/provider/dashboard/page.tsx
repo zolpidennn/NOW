@@ -16,10 +16,16 @@ export default async function ProviderDashboardPage() {
 
   const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
 
+<<<<<<< HEAD
   // Check if user is a direct provider or team member or company admin
   let provider = null
   let isTeamMember = false
   let isCompanyAdmin = false
+=======
+  // Check if user is a direct provider or team member
+  let provider = null
+  let isTeamMember = false
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
   let companyId = null
 
   // First, check if user is a direct provider
@@ -53,6 +59,7 @@ export default async function ProviderDashboardPage() {
       provider = teamMember.company
       isTeamMember = true
       companyId = teamMember.company_id
+<<<<<<< HEAD
     } else {
       // Check if user is a company admin
       const { data: companyAdmin } = await supabase
@@ -76,6 +83,8 @@ export default async function ProviderDashboardPage() {
         isCompanyAdmin = true
         companyId = companyAdmin.company_id
       }
+=======
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
     }
   }
 
@@ -89,7 +98,11 @@ export default async function ProviderDashboardPage() {
   }
 
   // Fetch provider stats
+<<<<<<< HEAD
   const providerId = isTeamMember || isCompanyAdmin ? companyId : provider.id
+=======
+  const providerId = isTeamMember ? companyId : provider.id
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
 
   const [productsResult, requestsResult] = await Promise.all([
     supabase.from("provider_products").select("*", { count: "exact" }).eq("provider_id", providerId),

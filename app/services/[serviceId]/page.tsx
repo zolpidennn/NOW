@@ -244,13 +244,22 @@ export default async function ServiceCategoryPage({ params }: PageProps) {
   }
 
   return (
+<<<<<<< HEAD
     <div className="min-h-screen bg-background pb-20">
+=======
+    <div className="min-h-screen bg-gray-50 pb-20">
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
       <MobileHeader />
 
       <main>
         {/* Header com botão voltar */}
+<<<<<<< HEAD
         <div className="bg-background px-4 py-4 border-b border-border">
           <Link href="/search" className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground">
+=======
+        <div className="bg-white px-4 py-4">
+          <Link href="/search" className="inline-flex items-center gap-2 text-sm font-medium text-gray-600">
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
             <ArrowLeft className="h-4 w-4" />
             Voltar
           </Link>

@@ -19,22 +19,31 @@ interface ServiceRequest {
   created_at: string
   provider_id: string | null
   service_providers: {
+<<<<<<< HEAD
     id: string
+=======
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
     company_name: string
     cnpj?: string
     phone?: string
     email?: string
+<<<<<<< HEAD
     logo_url?: string
     rating?: number
     total_reviews?: number
+=======
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
   } | null
   service?: {
     name: string
   } | null
+<<<<<<< HEAD
   service_categories?: {
     name: string
     icon?: string
   } | null
+=======
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
 }
 
 export function ServiceOrdersList({ userId }: { userId: string }) {
@@ -43,7 +52,11 @@ export function ServiceOrdersList({ userId }: { userId: string }) {
 
   useEffect(() => {
     loadRequests()
+<<<<<<< HEAD
   }, [userId])
+=======
+  }, [])
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
 
   const loadRequests = async () => {
     const supabase = createClient()
@@ -54,6 +67,7 @@ export function ServiceOrdersList({ userId }: { userId: string }) {
         `
         *,
         service_providers (
+<<<<<<< HEAD
           id,
           company_name,
           cnpj,
@@ -69,6 +83,15 @@ export function ServiceOrdersList({ userId }: { userId: string }) {
         service_categories (
           name,
           icon
+=======
+          company_name,
+          cnpj,
+          phone,
+          email
+        ),
+        service:services (
+          name
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
         )
       `,
       )
@@ -90,7 +113,10 @@ export function ServiceOrdersList({ userId }: { userId: string }) {
       <div className="text-center py-8">
         <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
         <p className="text-muted-foreground">Você ainda não tem solicitações de serviço</p>
+<<<<<<< HEAD
         <p className="text-xs text-muted-foreground mt-2">Comece selecionando um serviço e preenchendo o formulário</p>
+=======
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
       </div>
     )
   }

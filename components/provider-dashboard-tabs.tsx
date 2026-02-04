@@ -2,11 +2,18 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+<<<<<<< HEAD
 import { Package, Calendar, MessageSquare, BarChart3, Bell } from "lucide-react"
 import { ProviderProductsManager } from "@/components/provider-products-manager"
 import { ProviderAppointmentsManager } from "@/components/provider-appointments-manager"
 import { ProviderChatsManager } from "@/components/provider-chats-manager"
 import { ProviderRequests } from "@/components/provider-requests"
+=======
+import { Package, Calendar, MessageSquare, BarChart3 } from "lucide-react"
+import { ProviderProductsManager } from "@/components/provider-products-manager"
+import { ProviderAppointmentsManager } from "@/components/provider-appointments-manager"
+import { ProviderChatsManager } from "@/components/provider-chats-manager"
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
 import { Badge } from "@/components/ui/badge"
 
 interface ProviderDashboardTabsProps {
@@ -26,6 +33,7 @@ export function ProviderDashboardTabs({ provider, stats, providerId, isTeamMembe
   return (
     <div className="space-y-6">
       {/* Stats Overview */}
+<<<<<<< HEAD
       <div className="grid gap-4 md:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -38,6 +46,9 @@ export function ProviderDashboardTabs({ provider, stats, providerId, isTeamMembe
           </CardContent>
         </Card>
 
+=======
+      <div className="grid gap-4 md:grid-cols-4">
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Produtos Publicados</CardTitle>
@@ -84,12 +95,17 @@ export function ProviderDashboardTabs({ provider, stats, providerId, isTeamMembe
       </div>
 
       {/* Management Tabs */}
+<<<<<<< HEAD
       <Tabs defaultValue="requests" className="space-y-4">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="requests" className="flex items-center gap-2">
             <Bell className="h-4 w-4" />
             Solicitações
           </TabsTrigger>
+=======
+      <Tabs defaultValue="products" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-3">
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
           <TabsTrigger value="products" className="flex items-center gap-2">
             <Package className="h-4 w-4" />
             Produtos
@@ -114,10 +130,13 @@ export function ProviderDashboardTabs({ provider, stats, providerId, isTeamMembe
           </TabsTrigger>
         </TabsList>
 
+<<<<<<< HEAD
         <TabsContent value="requests">
           <ProviderRequests providerId={providerId} />
         </TabsContent>
 
+=======
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
         <TabsContent value="products">
           <ProviderProductsManager providerId={providerId} />
         </TabsContent>

@@ -269,6 +269,7 @@ export function SequentialServiceRequestForm({
       alert("Por favor, confirme o número de telefone")
       return
     }
+<<<<<<< HEAD
     // Verificação de telefone desativada temporariamente
     // if (step === 4 && !phoneVerified) {
     //   alert("Por favor, verifique seu telefone antes de continuar")
@@ -280,6 +281,14 @@ export function SequentialServiceRequestForm({
     }
     if (step === 6 && !selectedProvider) {
       alert("Por favor, selecione uma empresa credenciada no mapa")
+=======
+    if (step === 4 && !phoneVerified) {
+      alert("Por favor, verifique seu telefone antes de continuar")
+      return
+    }
+    if (step === 5 && !description) {
+      alert("Por favor, descreva o problema")
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
       return
     }
 
@@ -398,22 +407,35 @@ export function SequentialServiceRequestForm({
   }
 
   const handleSubmit = async () => {
+<<<<<<< HEAD
     if (!selectedProvider) {
       alert("Por favor, selecione uma empresa credenciada")
       return
     }
 
+=======
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
     setIsSubmitting(true)
 
     try {
       const supabase = createClient()
 
+<<<<<<< HEAD
       // Construir dados completos do pedido
       const requestData: any = {
         customer_id: profile.id,
         provider_id: selectedProvider.id,
         service_type: selectedCategoryData?.name || "residencial",
         address: address,
+=======
+      // Construir endereço completo (número vai no campo notes ou em endereço separado visualmente)
+      // Na tabela service_requests, o campo address armazena o endereço completo
+      // Mas na interface, o número fica em campo separado conforme solicitado
+      const requestData: any = {
+        customer_id: profile.id,
+        service_type: selectedCategoryData?.name || "residencial",
+        address: address, // Endereço completo
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
         city: profile?.city || "",
         state: profile?.state || "",
         zip_code: profile?.zip_code || "",
@@ -421,11 +443,15 @@ export function SequentialServiceRequestForm({
         status: "pending",
       }
 
+<<<<<<< HEAD
       // Se tem serviço específico selecionado
+=======
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
       if (selectedService) {
         requestData.service_id = selectedService
       }
 
+<<<<<<< HEAD
       // Inserir o pedido
       const { data, error } = await supabase
         .from("service_requests")
@@ -439,6 +465,20 @@ export function SequentialServiceRequestForm({
       router.push(`/orders`)
     } catch (error) {
       console.error("Error submitting request:", error)
+=======
+      // Se tem provider atribuído
+      if (selectedProvider?.id) {
+        requestData.provider_id = selectedProvider.id
+      }
+
+      const { data, error } = await supabase.from("service_requests").insert([requestData]).select().single()
+
+      if (error) throw error
+
+      router.push(`/orders`)
+    } catch (error) {
+      console.error("[v0] Error submitting request:", error)
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
       alert("Erro ao enviar solicitação. Por favor, tente novamente.")
     } finally {
       setIsSubmitting(false)
@@ -661,8 +701,12 @@ export function SequentialServiceRequestForm({
                   )}
                 </div>
 
+<<<<<<< HEAD
                 {/* Verificação de telefone desativada temporariamente */}
                 {/* {!phoneVerified && (
+=======
+                {!phoneVerified && (
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
                   <Button
                     type="button"
                     variant="outline"
@@ -679,7 +723,11 @@ export function SequentialServiceRequestForm({
                       "Enviar código de verificação por SMS"
                     )}
                   </Button>
+<<<<<<< HEAD
                 )} */}
+=======
+                )}
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
               </div>
             )}
           </CardContent>
@@ -722,7 +770,11 @@ export function SequentialServiceRequestForm({
 
       {/* Step 6: Select Provider on Map */}
       {step === 6 && (
+<<<<<<< HEAD
         <Card className="pb-20 relative z-0">
+=======
+        <Card>
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
           <CardContent className="pt-6 space-y-4">
             {locationLoading ? (
               <div className="text-center space-y-4 py-8">
@@ -749,11 +801,19 @@ export function SequentialServiceRequestForm({
                   </Button>
                 </div>
 
+<<<<<<< HEAD
                 <div className="h-80 w-full rounded-lg overflow-hidden border relative z-0">
                   <MapContainer
                     center={[userLocation.lat, userLocation.lng]}
                     zoom={13}
                     style={{ height: '100%', width: '100%', zIndex: 1 }}
+=======
+                <div className="h-96 w-full rounded-lg overflow-hidden border relative">
+                  <MapContainer
+                    center={[userLocation.lat, userLocation.lng]}
+                    zoom={13}
+                    style={{ height: '100%', width: '100%' }}
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
                     className="rounded-lg"
                     maxBounds={[[userLocation.lat - 0.1, userLocation.lng - 0.1], [userLocation.lat + 0.1, userLocation.lng + 0.1]]}
                     maxBoundsViscosity={1.0}
@@ -920,8 +980,13 @@ export function SequentialServiceRequestForm({
       </div>
     </div>
 
+<<<<<<< HEAD
     {/* Phone Verification Dialog - Desativado temporariamente */}
     {/* <Dialog open={showPhoneVerification} onOpenChange={setShowPhoneVerification}>
+=======
+    {/* Phone Verification Dialog */}
+    <Dialog open={showPhoneVerification} onOpenChange={setShowPhoneVerification}>
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Verificar Telefone</DialogTitle>
@@ -966,7 +1031,11 @@ export function SequentialServiceRequestForm({
           </div>
         </div>
       </DialogContent>
+<<<<<<< HEAD
     </Dialog> */}
+=======
+    </Dialog>
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
     </>
   )
 }

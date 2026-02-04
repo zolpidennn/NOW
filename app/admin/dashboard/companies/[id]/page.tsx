@@ -75,12 +75,20 @@ type CompanyDocument = {
 
 type CompanyAdmin = {
   id: string
+<<<<<<< HEAD
   user_id: string | null
   user_email: string
+=======
+  user_id: string
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
   permission_level: 'master' | 'staff' | 'simple'
   is_active: boolean
   invited_at: string
   accepted_at?: string
+<<<<<<< HEAD
+=======
+  user_email?: string
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
   user_name?: string
 }
 
@@ -108,8 +116,11 @@ export default function CompanyDetailsPage() {
   const [admins, setAdmins] = useState<CompanyAdmin[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("details")
+<<<<<<< HEAD
   const [tableNotFound, setTableNotFound] = useState(false)
   const [creatingTable, setCreatingTable] = useState(false)
+=======
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
 
   // Form states
   const [showInviteDialog, setShowInviteDialog] = useState(false)
@@ -119,6 +130,7 @@ export default function CompanyDetailsPage() {
   useEffect(() => {
     checkAuth()
     loadCompanyData()
+<<<<<<< HEAD
     checkAndCreateTable()
   }, [companyId])
 
@@ -152,6 +164,10 @@ export default function CompanyDetailsPage() {
     }
   }
 
+=======
+  }, [companyId])
+
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
   const checkAuth = async () => {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -198,6 +214,7 @@ export default function CompanyDetailsPage() {
     try {
       const { data: adminsData } = await supabase
         .from("company_admins")
+<<<<<<< HEAD
         .select("*")
         .eq("company_id", companyId)
         .order("invited_at", { ascending: false })
@@ -226,6 +243,19 @@ export default function CompanyDetailsPage() {
       )
 
       setAdmins(enrichedAdmins || [])
+=======
+        .select(`
+          *,
+          profiles:user_id (
+            full_name,
+            email:email
+          )
+        `)
+        .eq("company_id", companyId)
+        .order("created_at", { ascending: false })
+
+      setAdmins(adminsData || [])
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
     } catch (error) {
       console.log("Company admins table not available yet")
     }
@@ -239,6 +269,7 @@ export default function CompanyDetailsPage() {
       return
     }
 
+<<<<<<< HEAD
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(inviteEmail)) {
@@ -322,20 +353,58 @@ export default function CompanyDetailsPage() {
       }
 
       // Add to company_admins (whether user exists or not)
+=======
+    const supabase = createClient()
+
+    try {
+      // Check if user exists
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', inviteEmail)
+        .single()
+
+      if (userError || !userData) {
+        alert("Usuário não encontrado. Certifique-se de que o email está cadastrado na plataforma.")
+        return
+      }
+
+      // Check if already invited
+      const { data: existingInvite } = await supabase
+        .from('company_admins')
+        .select('id')
+        .eq('company_id', companyId)
+        .eq('user_id', userData.id)
+        .single()
+
+      if (existingInvite) {
+        alert("Este usuário já foi convidado para esta empresa.")
+        return
+      }
+
+      // Create invitation (if table exists)
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
       try {
         const { error: inviteError } = await supabase
           .from('company_admins')
           .insert([{
             company_id: companyId,
+<<<<<<< HEAD
             user_id: userId, // Can be null if user doesn't exist yet
             user_email: inviteEmail.toLowerCase(),
             permission_level: invitePermission,
             invited_by: currentUser.id,
             invited_at: new Date().toISOString()
+=======
+            user_id: userData.id,
+            permission_level: invitePermission,
+            invited_by: (await supabase.auth.getUser()).data.user?.id
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
           }])
 
         if (inviteError) {
           console.error("Invite error:", inviteError)
+<<<<<<< HEAD
           
           // If table not found, try to create it
           if (inviteError.code === 'PGRST205') {
@@ -388,6 +457,23 @@ export default function CompanyDetailsPage() {
     } catch (error) {
       console.error("Invite error:", error)
       alert("Erro ao adicionar usuário")
+=======
+          alert("Erro ao enviar convite")
+          return
+        }
+
+        alert("Convite enviado com sucesso!")
+        setShowInviteDialog(false)
+        setInviteEmail("")
+        loadCompanyData()
+      } catch (tableError) {
+        console.error("Company admins table not available:", tableError)
+        alert("Sistema de convites ainda não está disponível. Entre em contato com o administrador.")
+      }
+    } catch (error) {
+      console.error("Invite error:", error)
+      alert("Erro ao enviar convite")
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
     }
   }
 
@@ -623,6 +709,7 @@ export default function CompanyDetailsPage() {
 
           {/* Admins Tab */}
           <TabsContent value="admins" className="space-y-6">
+<<<<<<< HEAD
       {tableNotFound && (
               <Alert className="border-yellow-200 bg-yellow-50 dark:bg-yellow-950">
                 <AlertTriangle className="h-4 w-4 text-yellow-600" />
@@ -647,6 +734,8 @@ export default function CompanyDetailsPage() {
                 </AlertDescription>
               </Alert>
             )}
+=======
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
@@ -656,13 +745,20 @@ export default function CompanyDetailsPage() {
                   </span>
                   <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
                     <DialogTrigger asChild>
+<<<<<<< HEAD
                       <Button disabled={tableNotFound || creatingTable}>
                         <UserPlus className="h-4 w-4 mr-2" />
                         {creatingTable ? "Inicializando..." : "Adicionar Usuário"}
+=======
+                      <Button>
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Convidar Administrador
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
                       </Button>
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
+<<<<<<< HEAD
                         <DialogTitle>Adicionar Usuário à Empresa</DialogTitle>
                       </DialogHeader>
                       <div className="space-y-4">
@@ -672,6 +768,11 @@ export default function CompanyDetailsPage() {
                             O usuário receberá acesso ao dashboard assim que for adicionado. Se ele já tiver cadastro, acessará imediatamente. Caso contrário, terá acesso automático após se cadastrar.
                           </AlertDescription>
                         </Alert>
+=======
+                        <DialogTitle>Convidar Administrador</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
                         <div>
                           <Label htmlFor="invite-email">Email do usuário</Label>
                           <Input
@@ -699,7 +800,11 @@ export default function CompanyDetailsPage() {
                         </div>
                         <div className="flex gap-2">
                           <Button onClick={handleInviteAdmin} className="flex-1">
+<<<<<<< HEAD
                             Adicionar Usuário
+=======
+                            Enviar Convite
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
                           </Button>
                           <Button variant="outline" onClick={() => setShowInviteDialog(false)}>
                             Cancelar
@@ -722,12 +827,18 @@ export default function CompanyDetailsPage() {
                 ) : (
                   <div className="space-y-4">
                     {admins.map((admin) => (
+<<<<<<< HEAD
                       <div key={admin.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900">
                         <div className="flex items-center gap-3 flex-1">
+=======
+                      <div key={admin.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-3">
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
                           <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
                             <Users className="h-5 w-5" />
                           </div>
                           <div>
+<<<<<<< HEAD
                             <p className="font-medium">
                               {admin.user_name ? (
                                 <>
@@ -745,6 +856,10 @@ export default function CompanyDetailsPage() {
                             <p className="text-xs text-muted-foreground mt-1">
                               Adicionado em: {new Date(admin.invited_at).toLocaleDateString('pt-BR')}
                             </p>
+=======
+                            <p className="font-medium">{admin.user_name || 'Nome não disponível'}</p>
+                            <p className="text-sm text-muted-foreground">{admin.user_email || admin.user_id}</p>
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -754,11 +869,14 @@ export default function CompanyDetailsPage() {
                           <Badge variant={admin.is_active ? "default" : "secondary"}>
                             {admin.is_active ? "Ativo" : "Inativo"}
                           </Badge>
+<<<<<<< HEAD
                           {admin.user_id && !admin.accepted_at && (
                             <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                               Pendente
                             </Badge>
                           )}
+=======
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
                         </div>
                       </div>
                     ))}

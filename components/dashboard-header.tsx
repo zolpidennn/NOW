@@ -25,6 +25,7 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
   const router = useRouter()
 
   const handleLogout = async () => {
+<<<<<<< HEAD
     try {
       const supabase = createClient()
       await supabase.auth.signOut()
@@ -42,6 +43,11 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
       // Still redirect even if error
       router.push("/auth/logout")
     }
+=======
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push("/")
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
   }
 
   return (

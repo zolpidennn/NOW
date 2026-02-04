@@ -58,12 +58,21 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
   const { data: services } = await query
 
   return (
+<<<<<<< HEAD
     <div className="flex min-h-screen flex-col bg-background">
       <Header />
       <main className="flex-1">
         <div className="border-b border-border/40 py-12 bg-background">
           <div className="container">
             <h1 className="text-4xl font-bold text-foreground">Serviços Disponíveis</h1>
+=======
+    <div className="flex min-h-screen flex-col">
+      <Header />
+      <main className="flex-1">
+        <div className="border-b border-border/40 py-12">
+          <div className="container">
+            <h1 className="text-4xl font-bold">Serviços Disponíveis</h1>
+>>>>>>> 1fad47db41719a2e913bac89d1f352d0dc539db8
             <p className="mt-2 text-muted-foreground">Encontre o serviço perfeito para sua necessidade</p>
           </div>
         </div>
