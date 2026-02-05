@@ -1,6 +1,6 @@
 {
-  "name": "Solicite seu serviço - NOW",
-  "short_name": "NOW",
+  "name": "NOW Security Marketplace",
+  "short_name": "NOW Security",
   "description": "Plataforma de serviços de segurança eletrônica - CFTV, Alarmes, Portões e mais",
   "start_url": "/",
   "display": "standalone",
