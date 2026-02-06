@@ -26,7 +26,12 @@ interface ProductOrder {
   } | null
 }
 
-export function ProductOrdersList({ userId }: { userId: string }) {
+interface ProductOrdersListProps {
+  userId: string
+  onSelectOrder?: (order: ProductOrder) => void
+}
+
+export function ProductOrdersList({ userId, onSelectOrder }: ProductOrdersListProps) {
   const [orders, setOrders] = useState<ProductOrder[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -101,7 +106,7 @@ export function ProductOrdersList({ userId }: { userId: string }) {
   return (
     <div className="space-y-4">
       {orders.map((order) => (
-        <Card key={order.id}>
+        <Card key={order.id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => onSelectOrder?.(order)}>
           <CardHeader>
             <div className="flex items-start justify-between">
               <div className="flex-1">

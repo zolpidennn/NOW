@@ -3,18 +3,20 @@ import { ProductDetails } from "@/components/product-details"
 import { MobileHeader } from "@/components/mobile-header"
 import { BottomNav } from "@/components/bottom-nav"
 
-export default function ProductDetailPage({
+export default async function ProductDetailPage({
   params,
 }: {
-  params: { productId: string }
+  params: Promise<{ productId: string }>
 }) {
+  const { productId } = await params
+
   return (
     <div className="min-h-screen bg-background">
       <MobileHeader />
 
       <main className="pb-20 pt-[64px]">
         <Suspense fallback={<ProductDetailsSkeleton />}>
-          <ProductDetails productId={params.productId} />
+          <ProductDetails productId={productId} />
         </Suspense>
       </main>
 

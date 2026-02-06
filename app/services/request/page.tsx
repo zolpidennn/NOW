@@ -12,6 +12,11 @@ interface ServiceRequestPageProps {
   }>
 }
 
+function isValidUUID(str: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  return uuidRegex.test(str)
+}
+
 export default async function ServiceRequestPage({ searchParams }: ServiceRequestPageProps) {
   const { category } = await searchParams
   const supabase = await createClient()
@@ -26,32 +31,34 @@ export default async function ServiceRequestPage({ searchParams }: ServiceReques
     redirect(`/auth/login?redirect=${redirectUrl}`)
   }
 
-  // Buscar perfil do usuário
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+  // Buscar dados em paralelo
+  const [
+    { data: profile },
+    { data: categories },
+    categoryIdResult,
+  ] = await Promise.all([
+    supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
+    supabase
+      .from("service_categories")
+      .select("*")
+      .eq("is_active", true)
+      .order("name"),
+    // Buscar categoria por slug se fornecida e não for UUID
+    category && !isValidUUID(category)
+      ? supabase
+          .from("service_categories")
+          .select("id")
+          .eq("slug", category)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ])
 
-  // Buscar categorias disponíveis
-  const { data: categories } = await supabase.from("service_categories").select("*").eq("is_active", true).order("name")
+  // Determinar categoryId
+  const categoryId = isValidUUID(category) ? category : categoryIdResult?.data?.id
 
   // Buscar serviços da categoria se fornecida
   let services = null
-  if (category) {
-    // First, check if category is a UUID or slug
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(category)
-
-    let categoryId = category
-
-    // If it's a slug, look up the category ID
-    if (!isUUID) {
-      const { data: categoryData } = await supabase
-        .from("service_categories")
-        .select("id")
-        .eq("slug", category)
-        .single()
-
-      categoryId = categoryData?.id || category
-    }
-
-    // Now query services with the category ID
+  if (categoryId) {
     const { data } = await supabase
       .from("services")
       .select(
@@ -59,7 +66,7 @@ export default async function ServiceRequestPage({ searchParams }: ServiceReques
         *,
         provider:service_providers(*),
         category:service_categories(*)
-      `,
+      `
       )
       .eq("is_active", true)
       .eq("category_id", categoryId)

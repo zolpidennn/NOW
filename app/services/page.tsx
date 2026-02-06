@@ -12,28 +12,28 @@ interface ServicesPageProps {
 }
 
 export default async function ServicesPage({ searchParams }: ServicesPageProps) {
-  const params = await searchParams
+  const { category, search } = await searchParams
   const supabase = await createClient()
 
-  // Buscar categorias
-  const { data: categories } = await supabase
-    .from("service_categories")
-    .select("*")
-    .eq("is_active", true)
-    .order("display_order")
-
-  let categoryId = params.category
-
-  // If category param exists and is not a UUID, look it up by slug
-  if (params.category && !isValidUUID(params.category)) {
-    const { data: categoryData } = await supabase
+  // Buscar categorias em paralelo
+  const [{ data: categories }, { data: categoryData }] = await Promise.all([
+    supabase
       .from("service_categories")
-      .select("id")
-      .eq("slug", params.category)
-      .single()
+      .select("*")
+      .eq("is_active", true)
+      .order("display_order"),
+    // Buscar categoria por slug se fornecida e não for UUID
+    category && !isValidUUID(category)
+      ? supabase
+          .from("service_categories")
+          .select("id")
+          .eq("slug", category)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ])
 
-    categoryId = categoryData?.id
-  }
+  // Determinar categoryId
+  const categoryId = isValidUUID(category) ? category : categoryData?.id
 
   // Buscar serviços com filtros
   let query = supabase
@@ -43,7 +43,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
       *,
       provider:service_providers(*),
       category:service_categories(*)
-    `,
+    `
     )
     .eq("is_active", true)
 
@@ -51,8 +51,10 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
     query = query.eq("category_id", categoryId)
   }
 
-  if (params.search) {
-    query = query.or(`name.ilike.%${params.search}%,description.ilike.%${params.search}%`)
+  if (search) {
+    query = query.or(
+      `name.ilike.%${search}%,description.ilike.%${search}%`
+    )
   }
 
   const { data: services } = await query

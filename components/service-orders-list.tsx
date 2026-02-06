@@ -37,7 +37,12 @@ interface ServiceRequest {
   } | null
 }
 
-export function ServiceOrdersList({ userId }: { userId: string }) {
+interface ServiceOrdersListProps {
+  userId: string
+  onSelectOrder?: (request: ServiceRequest) => void
+}
+
+export function ServiceOrdersList({ userId, onSelectOrder }: ServiceOrdersListProps) {
   const [requests, setRequests] = useState<ServiceRequest[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -101,6 +106,7 @@ export function ServiceOrdersList({ userId }: { userId: string }) {
         <ServiceOrderCard
           key={request.id}
           request={request}
+          onSelect={() => onSelectOrder?.(request)}
         />
       ))}
     </div>

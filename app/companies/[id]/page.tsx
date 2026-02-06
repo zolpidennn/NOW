@@ -1,9 +1,5 @@
-"use client"
-
-import { useState } from "react"
-import { useRouter, useParams } from "next/navigation"
+import { notFound } from "next/navigation"
 import Image from "next/image"
-import { useToast } from "@/hooks/use-toast"
 import {
   Star,
   MapPin,
@@ -13,15 +9,20 @@ import {
   Share2,
   Heart,
   MessageCircle,
-  Clock,
-  Shield,
-  CheckCircle2,
+  Zap,
+  AlertCircle,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { createClient } from "@/lib/supabase/server"
+import { CompanyDetailClient } from "@/components/company-detail-client"
 
-// Dados mockados - será substituído por API
-const companiesData: Record<string, any> = {
+interface CompanyPageProps {
+  params: Promise<{
+    id: string
+  }>
+}
+
+// Dados mockados como fallback - será substituído por API
+const companiesDataFallback: Record<string, any> = {
   "1": {
     id: "1",
     company_name: "SecureVision Segurança",
@@ -204,303 +205,77 @@ const companiesData: Record<string, any> = {
   },
 }
 
-export default function CompanyPage() {
-  const params = useParams()
-  const router = useRouter()
-  const { toast } = useToast()
-  const [isFavorite, setIsFavorite] = useState(false)
-  const [activeTab, setActiveTab] = useState("services")
+export default async function CompanyPage({ params }: CompanyPageProps) {
+  const { id: companyId } = await params
 
-  const companyId = params.id as string
-  const company = companiesData[companyId]
-
-  if (!company) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Empresa não encontrada</h1>
-          <Button onClick={() => router.back()}>Voltar</Button>
-        </div>
-      </div>
-    )
+  if (!companyId || companyId === "undefined") {
+    notFound()
   }
 
-  const handleContact = () => {
-    router.push(`/contact?company=${company.id}&name=${company.company_name}&phone=${company.phone}`)
-  }
+  try {
+    const supabase = await createClient()
 
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: company.company_name,
-        text: company.description,
-        url: window.location.href,
-      })
-    } else {
-      toast({
-        title: "Link copiado!",
-        description: "O link da empresa foi copiado para a área de transferência",
-      })
+    // Load company data
+    const { data: company, error: companyError } = await supabase
+      .from("service_providers")
+      .select("*")
+      .eq("id", companyId)
+      .maybeSingle()
+
+    if (companyError) {
+      console.error("Error loading company:", companyError)
+      notFound()
     }
+
+    if (!company) {
+      // Try fallback mockado data
+      const fallbackData = companiesDataFallback[companyId]
+      if (fallbackData) {
+        return (
+          <CompanyDetailClient 
+            company={fallbackData} 
+            isMocked={true}
+          />
+        )
+      }
+      notFound()
+    }
+
+    // Load related data in parallel
+    const [
+      { data: products = [] },
+      { data: services = [] },
+      { data: reviews = [] },
+    ] = await Promise.all([
+      supabase
+        .from("products")
+        .select("id, name:product_name, description, price, image_url, stock")
+        .eq("provider_id", companyId)
+        .limit(12),
+      supabase
+        .from("service_requests")
+        .select("id, title, description, status, category")
+        .eq("provider_id", companyId)
+        .eq("status", "completed")
+        .limit(12),
+      supabase
+        .from("reviews")
+        .select("id, rating, comment, author_name, created_at")
+        .eq("provider_id", companyId)
+        .order("created_at", { ascending: false })
+        .limit(20),
+    ])
+
+    const enrichedCompany = {
+      ...company,
+      products: products || [],
+      services: services || [],
+      reviews: reviews || [],
+    }
+
+    return <CompanyDetailClient company={enrichedCompany} isMocked={false} />
+  } catch (error) {
+    console.error("Unexpected error loading company:", error)
+    notFound()
   }
-
-  return (
-    <div className="min-h-screen bg-background pb-20">
-      {/* Header com botões flutuantes */}
-      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-sm border-b flex items-center justify-between px-4 py-3">
-        <button
-          onClick={() => router.back()}
-          className="p-2 hover:bg-muted rounded-lg transition-colors"
-        >
-          <ChevronLeft className="h-6 w-6" />
-        </button>
-        <div className="flex gap-2">
-          <button
-            onClick={handleShare}
-            className="p-2 hover:bg-muted rounded-lg transition-colors"
-          >
-            <Share2 className="h-5 w-5" />
-          </button>
-          <button
-            onClick={() => setIsFavorite(!isFavorite)}
-            className="p-2 hover:bg-muted rounded-lg transition-colors"
-          >
-            <Heart
-              className={`h-5 w-5 transition-colors ${
-                isFavorite ? "fill-red-500 text-red-500" : ""
-              }`}
-            />
-          </button>
-        </div>
-      </div>
-
-      {/* Banner e Logo */}
-      <div className="relative">
-        <div className="relative w-full h-40 bg-gradient-to-br from-primary/20 to-primary/5">
-          <Image
-            src={company.banner}
-            alt={company.company_name}
-            fill
-            className="object-cover"
-          />
-        </div>
-        <div className="absolute -bottom-10 left-4 w-24 h-24 rounded-lg border-4 border-background overflow-hidden bg-card">
-          <Image
-            src={company.logo}
-            alt={company.company_name}
-            width={96}
-            height={96}
-            className="w-full h-full object-cover"
-          />
-        </div>
-      </div>
-
-      {/* Informações da Empresa */}
-      <div className="px-4 pt-16 pb-4">
-        <div className="space-y-3">
-          {/* Nome e Badge */}
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <h1 className="text-2xl font-bold flex items-center gap-2">
-                {company.company_name}
-                {company.verified && (
-                  <CheckCircle2 className="h-6 w-6 text-primary" title="Verificado" />
-                )}
-              </h1>
-              <p className="text-muted-foreground text-sm">{company.description}</p>
-            </div>
-          </div>
-
-          {/* Rating e Reviews */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 bg-yellow-50 dark:bg-yellow-950 px-3 py-1 rounded-lg">
-              <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-              <span className="font-semibold">{company.rating}</span>
-              <span className="text-sm text-muted-foreground">
-                ({company.total_reviews} avaliações)
-              </span>
-            </div>
-          </div>
-
-          {/* Informações de contato */}
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center gap-3 text-muted-foreground">
-              <MapPin className="h-4 w-4" />
-              <span>
-                {company.address}, {company.city} - {company.state}
-              </span>
-            </div>
-            <div className="flex items-center gap-3 text-muted-foreground">
-              <Clock className="h-4 w-4" />
-              <span>Tempo de resposta: {company.responseTime}</span>
-            </div>
-            <div className="flex items-center gap-3 text-muted-foreground">
-              <Phone className="h-4 w-4" />
-              <a href={`tel:${company.phone}`} className="hover:text-primary">
-                {company.phone}
-              </a>
-            </div>
-            <div className="flex items-center gap-3 text-muted-foreground">
-              <Mail className="h-4 w-4" />
-              <a href={`mailto:${company.email}`} className="hover:text-primary">
-                {company.email}
-              </a>
-            </div>
-          </div>
-
-          {/* Especialidades */}
-          <div className="flex flex-wrap gap-2 pt-2">
-            {company.specialties.map((specialty: string) => (
-              <span
-                key={specialty}
-                className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-full"
-              >
-                {specialty}
-              </span>
-            ))}
-          </div>
-
-          {/* Botão de Contato */}
-          <Button onClick={handleContact} className="w-full mt-4">
-            <MessageCircle className="h-4 w-4 mr-2" />
-            Entrar em Contato
-          </Button>
-        </div>
-      </div>
-
-      {/* Sobre a Empresa */}
-      <div className="px-4 py-4 border-t">
-        <h3 className="font-semibold mb-2">Sobre</h3>
-        <p className="text-sm text-muted-foreground">{company.about}</p>
-      </div>
-
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 px-4 bg-transparent border-b rounded-none h-auto gap-0">
-          <TabsTrigger
-            value="services"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
-          >
-            Serviços
-          </TabsTrigger>
-          <TabsTrigger
-            value="products"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
-          >
-            Produtos
-          </TabsTrigger>
-          <TabsTrigger
-            value="reviews"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
-          >
-            Avaliações
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Serviços */}
-        <TabsContent value="services" className="px-4 py-4 space-y-3">
-          {company.services.length > 0 ? (
-            company.services.map((service: any) => (
-              <div
-                key={service.id}
-                className="p-4 border rounded-lg hover:border-primary/50 transition-colors cursor-pointer"
-              >
-                <h4 className="font-semibold">{service.name}</h4>
-                <p className="text-sm text-muted-foreground mt-1">{service.description}</p>
-                <div className="flex items-center justify-between mt-3 text-sm">
-                  <span className="text-primary font-semibold">{service.price}</span>
-                  <span className="text-muted-foreground">{service.duration}</span>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>Nenhum serviço registrado</p>
-            </div>
-          )}
-        </TabsContent>
-
-        {/* Produtos */}
-        <TabsContent value="products" className="px-4 py-4">
-          {company.products.length > 0 ? (
-            <div className="grid grid-cols-2 gap-3">
-              {company.products.map((product: any) => (
-                <div
-                  key={product.id}
-                  className="border rounded-lg overflow-hidden hover:border-primary/50 transition-colors cursor-pointer"
-                >
-                  <div className="relative w-full h-24 bg-muted">
-                    <Image
-                      src={product.image}
-                      alt={product.name}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="p-2">
-                    <h4 className="text-sm font-semibold line-clamp-2">
-                      {product.name}
-                    </h4>
-                    <p className="text-primary font-semibold text-sm mt-1">
-                      {product.price}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>Nenhum produto disponível</p>
-            </div>
-          )}
-        </TabsContent>
-
-        {/* Avaliações */}
-        <TabsContent value="reviews" className="px-4 py-4 space-y-4">
-          {company.reviews.length > 0 ? (
-            company.reviews.map((review: any) => (
-              <div key={review.id} className="border-b pb-4 last:border-b-0">
-                <div className="flex items-start gap-3">
-                  <Image
-                    src={review.avatar}
-                    alt={review.author}
-                    width={40}
-                    height={40}
-                    className="rounded-full"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-semibold text-sm">{review.author}</h4>
-                      <span className="text-xs text-muted-foreground">
-                        {review.date}
-                      </span>
-                    </div>
-                    <div className="flex gap-1 my-1">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-4 w-4 ${
-                            i < review.rating
-                              ? "fill-yellow-400 text-yellow-400"
-                              : "text-muted-foreground"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {review.comment}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>Nenhuma avaliação ainda</p>
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
-    </div>
-  )
 }

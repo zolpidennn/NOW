@@ -33,12 +33,11 @@ import {
   CheckCircle,
   AlertCircle,
   Tag,
-  Percent,
   Award,
   ThumbsUp,
-  ThumbsDown,
   Flag,
-  Eye
+  Eye,
+  ShoppingCart
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatCEP } from "@/lib/viacep"
@@ -120,86 +119,89 @@ export function ProductDetails({ productId }: { productId: string }) {
   const supabase = createClient()
 
   useEffect(() => {
-    loadProduct()
+    if (productId && productId !== "undefined") {
+      loadProduct()
+    }
   }, [productId])
 
   async function loadProduct() {
     setLoading(true)
 
-    console.log("Loading product with ID:", productId)
-
-    // Validate productId
-    if (!productId || productId === "undefined" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(productId)) {
-      console.error("Invalid product ID:", productId)
+    // Validate productId exists
+    if (!productId || productId === "undefined") {
+      console.error("Invalid product ID format:", { productId, type: typeof productId, length: productId?.length })
       setLoading(false)
       return
     }
 
     try {
-      console.log("Querying Supabase for product...")
+      const supabase = createClient()
 
-      // Check if user is authenticated
-      const { data: { user }, error: authError } = await supabase.auth.getUser()
-      console.log("Auth check:", { user: user?.id, authError })
-
-      // Load product
-      let query = supabase
+      // Query product by ID (without is_active filter to allow loading inactive products in edit mode)
+      const { data: productData, error: productError } = await supabase
         .from("products")
         .select("*")
         .eq("id", productId)
 
-      // Try without .single() first to see if we get any results
-      const { data: productData, error: productError } = await query
-
-      console.log("Supabase response:", { productData, productError })
-
       if (productError) {
-        console.error("Error loading product:", productError)
+        console.error("Database error loading product:", productError)
         setLoading(false)
         return
       }
 
       if (!productData || productData.length === 0) {
-        console.error("No product data returned - product not found in database")
+        console.warn("Product not found with ID:", productId)
         setLoading(false)
         return
       }
 
-      const product = productData[0]
-      console.log("Product found:", product)
-      setProduct(product)
-
-      // Set product images (main image + additional if available)
-      const images: ProductImage[] = [{
-        id: "main",
-        url: productData.image_url || "/placeholder.svg",
-        alt: productData.name
-      }]
-      setProductImages(images)
-
-      // Increment views
-      await supabase
-        .from("products")
-        .update({ views: (productData.views || 0) + 1 })
-        .eq("id", productId)
-
-      // Load provider if exists
-      if (productData.provider_id) {
-        const { data: providerData } = await supabase
-          .from("service_providers")
-          .select("*")
-          .eq("id", productData.provider_id)
-          .single()
-
-        if (providerData) {
-          setProvider(providerData)
-        }
+      const productRecord = productData[0]
+      
+      // Validate product has required fields
+      if (!productRecord.id || !productRecord.name) {
+        console.error("Product data incomplete")
+        setLoading(false)
+        return
       }
 
-      // Load reviews
-      const { data: reviewsData } = await supabase
+      setProduct(productRecord)
+
+      // Set product images
+      const images: ProductImage[] = [
+        {
+          id: "main",
+          url: productRecord.image_url || "/placeholder.svg",
+          alt: productRecord.name || "Product Image"
+        }
+      ]
+      setProductImages(images)
+
+      // Update views counter asynchronously (non-blocking)
+      supabase
+        .from("products")
+        .update({ views: (productRecord.views || 0) + 1 })
+        .eq("id", productId)
+        .then()
+        .catch((err) => console.warn("Could not update views:", err))
+
+      // Load provider data in parallel
+      if (productRecord.provider_id) {
+        supabase
+          .from("service_providers")
+          .select("*")
+          .eq("id", productRecord.provider_id)
+          .single()
+          .then(({ data: providerData }) => {
+            if (providerData) setProvider(providerData)
+          })
+          .catch((err) => console.warn("Could not load provider:", err))
+      }
+
+      // Load reviews in parallel
+      supabase
         .from("product_reviews")
-        .select(`
+        .select(
+          `
           id,
           rating,
           comment,
@@ -208,36 +210,39 @@ export function ProductDetails({ productId }: { productId: string }) {
           profiles:user_id (
             full_name
           )
-        `)
+        `
+        )
         .eq("product_id", productId)
         .order("created_at", { ascending: false })
+        .then(({ data: reviewsData }) => {
+          if (reviewsData && reviewsData.length > 0) {
+            const formattedReviews: Review[] = reviewsData.map((review) => ({
+              id: review.id,
+              user_id: review.user_id,
+              user_name: review.profiles?.full_name || "Usuário Anônimo",
+              rating: review.rating,
+              comment: review.comment,
+              created_at: review.created_at,
+              helpful: 0
+            }))
+            setReviews(formattedReviews)
+          }
+        })
+        .catch((err) => console.warn("Could not load reviews:", err))
 
-      if (reviewsData) {
-        const formattedReviews: Review[] = reviewsData.map(review => ({
-          id: review.id,
-          user_id: review.user_id,
-          user_name: review.profiles?.full_name || "Usuário Anônimo",
-          rating: review.rating,
-          comment: review.comment,
-          created_at: review.created_at,
-          helpful: 0
-        }))
-        setReviews(formattedReviews)
-      }
-
-      // Load related products
-      const { data: relatedData } = await supabase
+      // Load related products in parallel
+      supabase
         .from("products")
         .select("*")
-        .eq("category", productData.category)
-        .eq("is_active", true)
+        .eq("category", productRecord.category)
         .neq("id", productId)
         .limit(8)
-
-      setRelatedProducts(relatedData || [])
-
+        .then(({ data: relatedData }) => {
+          if (relatedData) setRelatedProducts(relatedData)
+        })
+        .catch((err) => console.warn("Could not load related products:", err))
     } catch (error) {
-      console.error("Error loading product data:", error)
+      console.error("Unexpected error loading product:", error)
     } finally {
       setLoading(false)
     }
@@ -305,8 +310,37 @@ export function ProductDetails({ productId }: { productId: string }) {
 
       toast.success("Avaliação enviada com sucesso!")
       setNewReview({ rating: 5, comment: "" })
-      // Reload reviews
-      loadProduct()
+      
+      // Reload reviews after submission
+      const { data: updatedReviews } = await supabase
+        .from("product_reviews")
+        .select(
+          `
+          id,
+          rating,
+          comment,
+          created_at,
+          user_id,
+          profiles:user_id (
+            full_name
+          )
+        `
+        )
+        .eq("product_id", productId)
+        .order("created_at", { ascending: false })
+
+      if (updatedReviews) {
+        const formattedReviews: Review[] = updatedReviews.map((review) => ({
+          id: review.id,
+          user_id: review.user_id,
+          user_name: review.profiles?.full_name || "Usuário Anônimo",
+          rating: review.rating,
+          comment: review.comment,
+          created_at: review.created_at,
+          helpful: 0
+        }))
+        setReviews(formattedReviews)
+      }
     } catch (error) {
       console.error("Error submitting review:", error)
       toast.error("Erro ao enviar avaliação")
@@ -323,23 +357,25 @@ export function ProductDetails({ productId }: { productId: string }) {
       return
     }
 
-    // Check if user has complete profile
-    const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
-
-    const { data: paymentInfo } = await supabase
-      .from("customer_payment_info")
-      .select("*")
-      .eq("customer_id", user.id)
+    // Check profile
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("full_name, phone")
+      .eq("id", user.id)
       .single()
 
-    if (!profile?.full_name || !profile?.phone || !paymentInfo?.is_complete) {
-      toast.error("Complete seu perfil e informações de pagamento antes de comprar")
+    if (profileError || !profile?.full_name || !profile?.phone) {
+      toast.error("Complete seu perfil antes de comprar")
       router.push("/profile/settings")
       return
     }
 
     // Redirect to checkout
-    router.push(`/products/${productId}/checkout?qty=${quantity}&coupon=${couponCode}`)
+    const params = new URLSearchParams({
+      qty: quantity.toString(),
+      coupon: couponCode
+    })
+    router.push(`/products/${productId}/checkout?${params.toString()}`)
   }
 
   async function toggleFavorite() {

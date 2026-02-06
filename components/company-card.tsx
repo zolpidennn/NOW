@@ -31,12 +31,17 @@ export function CompanyCard({
   responseTime,
   className,
 }: CompanyCardProps) {
+  // Generate fallback image if logo is empty
+  const logoUrl = logo && logo.trim() 
+    ? logo 
+    : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(company_name)}`
+
   return (
     <div className={cn("rounded-lg overflow-hidden bg-card border border-border hover:border-primary/50 transition-all active:scale-95", className)}>
       {/* Imagem da empresa */}
       <div className="relative w-full h-40 bg-gradient-to-br from-primary/20 to-primary/5 overflow-hidden group">
         <Image
-          src={logo}
+          src={logoUrl}
           alt={company_name}
           fill
           className="object-cover group-hover:scale-105 transition-transform"

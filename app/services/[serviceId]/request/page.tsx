@@ -14,6 +14,11 @@ export default async function ServiceRequestPage({ params }: ServiceRequestPageP
   const { serviceId } = await params
   const supabase = await createClient()
 
+  // Validar serviceId
+  if (!serviceId || serviceId === "undefined") {
+    redirect("/services")
+  }
+
   // Verificar autenticação
   const {
     data: { user },
@@ -23,25 +28,32 @@ export default async function ServiceRequestPage({ params }: ServiceRequestPageP
     redirect(`/auth/login?redirect=/services/${serviceId}/request`)
   }
 
-  // Buscar dados do serviço
-  const { data: service } = await supabase
-    .from("services")
-    .select(
+  // Buscar dados em paralelo
+  const [
+    { data: service },
+    { data: profile },
+  ] = await Promise.all([
+    supabase
+      .from("services")
+      .select(
+        `
+        *,
+        provider:service_providers(*),
+        category:service_categories(*)
       `
-      *,
-      provider:service_providers(*),
-      category:service_categories(*)
-    `,
-    )
-    .eq("id", serviceId)
-    .single()
+      )
+      .eq("id", serviceId)
+      .maybeSingle(),
+    supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .maybeSingle(),
+  ])
 
   if (!service) {
     redirect("/services")
   }
-
-  // Buscar perfil do usuário
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
 
   return (
     <div className="flex min-h-screen flex-col">
